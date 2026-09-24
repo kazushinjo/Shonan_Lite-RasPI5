@@ -1,0 +1,11 @@
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-F_Cu.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-B_Cu.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-F_Paste.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-B_Paste.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-F_Silkscreen.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-B_Silkscreen.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-F_Mask.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-B_Mask.gbr'.
+Plotted to 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-Edge_Cuts.gbr'.
+Created Gerber job file 'C:\tmp\Langstonev3\Langstone-controller\Langstone-controller-job.gbrjob'.
+情報: Done.
