@@ -25,7 +25,7 @@ class ManualScreen(SettingsSubScreen):
 
         nav_card = QtWidgets.QFrame()
         nav_card.setFixedWidth(190)
-        nav_card.setStyleSheet("QFrame { background: #191d1f; border-radius: 12px; } QListWidget { background: #191d1f; color: white; border: none; } QListWidget::item { padding: 8px 6px; border-radius: 5px; } QListWidget::item:selected { background: #0c9bc0; }")
+        nav_card.setStyleSheet("QFrame { background: #0f1214; border-radius: 12px; } QListWidget { background: #0f1214; color: white; border: none; } QListWidget::item { padding: 8px 6px; border-radius: 5px; } QListWidget::item:selected { background: #1677ff; }")
         nav_layout = QtWidgets.QVBoxLayout(nav_card)
         nav_layout.setContentsMargins(10, 10, 10, 10)
         nav_layout.setSpacing(6)
@@ -39,7 +39,7 @@ class ManualScreen(SettingsSubScreen):
         columns.addWidget(nav_card)
 
         content_card = QtWidgets.QFrame()
-        content_card.setStyleSheet("QFrame { background: #191d1f; border-radius: 12px; } QLabel { color: white; background: transparent; }")
+        content_card.setStyleSheet("QFrame { background: #0f1214; border-radius: 12px; } QLabel { color: white; background: transparent; }")
         content_layout = QtWidgets.QVBoxLayout(content_card)
         content_layout.setContentsMargins(16, 12, 16, 12)
         content_layout.setSpacing(8)
@@ -48,7 +48,7 @@ class ManualScreen(SettingsSubScreen):
         content_layout.addWidget(self.content_title)
         self.content_text = QtWidgets.QTextBrowser()
         self.content_text.setOpenExternalLinks(True)
-        self.content_text.setStyleSheet("QTextBrowser { background: #101416; color: #d9e1e4; border: 1px solid #30383c; border-radius: 6px; padding: 8px; }")
+        self.content_text.setStyleSheet("QTextBrowser { background: #0a0c0d; color: #d9e1e4; border: 1px solid #30383c; border-radius: 6px; padding: 8px; }")
         content_layout.addWidget(self.content_text, 1)
         columns.addWidget(content_card, 1)
         self.section_list.setCurrentRow(0)

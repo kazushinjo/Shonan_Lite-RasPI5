@@ -22,7 +22,7 @@ _CHIP_STYLE = (
     " border-radius: 8px; padding: 4px; font-size: 14px; font-weight: bold;"
     " min-height: 20px; }"
     "QPushButton:checked { background-color: #1677ff; }"
-    "QPushButton:pressed { background-color: #222222; }"
+    "QPushButton:pressed { background-color: #102a5c; }"
 )
 
 
@@ -62,7 +62,7 @@ class FecScreen(SettingsSubScreen):
         mode_card = QtWidgets.QFrame()
         mode_card.setFixedWidth(220)
         mode_card.setStyleSheet(
-            "QFrame { background-color: #191d1f; border-radius: 12px; }"
+            "QFrame { background-color: #0f1214; border-radius: 12px; }"
             "QLabel { color: white; background: transparent; }")
         mode_outer = QtWidgets.QVBoxLayout(mode_card)
         mode_outer.setContentsMargins(12, 10, 12, 10)
@@ -98,7 +98,7 @@ class FecScreen(SettingsSubScreen):
         # --- 中央カラム: 説明 ---
         info_card = QtWidgets.QFrame()
         info_card.setStyleSheet(
-            "QFrame { background-color: #191d1f; border-radius: 12px; }"
+            "QFrame { background-color: #0f1214; border-radius: 12px; }"
             "QLabel { color: white; background: transparent; }")
         info_layout = QtWidgets.QVBoxLayout(info_card)
         info_layout.setContentsMargins(16, 12, 16, 12)
@@ -155,7 +155,7 @@ class FecScreen(SettingsSubScreen):
         frame_card = QtWidgets.QFrame()
         frame_card.setFixedWidth(165)
         frame_card.setStyleSheet(
-            "QFrame { background-color: #191d1f; border-radius: 12px; }"
+            "QFrame { background-color: #0f1214; border-radius: 12px; }"
             "QLabel { color: white; background: transparent; }")
         frame_layout = QtWidgets.QVBoxLayout(frame_card)
         frame_layout.setContentsMargins(12, 10, 12, 10)
