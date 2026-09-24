@@ -256,17 +256,6 @@ class PlutoPowerCard(QtWidgets.QWidget):
         painter.setBrush(QtCore.Qt.NoBrush)
         painter.setPen(QtGui.QPen(QtGui.QColor("#247f9f"), 2))
         painter.drawRoundedRect(QtCore.QRectF(1, 1, 296, 109), 15, 15)
-
-        # ★このカードはオプション機能(PA_Power/PTTコントローラ(ESP32)が
-        # 無い環境では使えない)であることを示す赤字バッジ。
-        painter.setPen(QtGui.QColor("#ff3b30"))
-        opt_font = QtGui.QFont("Noto Sans CJK JP")
-        opt_font.setPixelSize(16)
-        opt_font.setBold(True)
-        opt_font.setStyleStrategy(QtGui.QFont.PreferAntialias)
-        painter.setFont(opt_font)
-        painter.drawText(QtCore.QRectF(240, 10, 48, 22),
-                         QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter, "OPT")
         painter.end()
 
 
