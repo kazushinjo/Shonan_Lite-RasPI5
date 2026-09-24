@@ -1,14 +1,17 @@
 """現行Mac風GUIのHelpとDOCX操作説明書で共有する章データ。"""
 
 MANUAL_SCREENSHOTS = {
-    "1. 画面構成": ["test1_home.png", "test1_langstone.png"],
+    "1. 画面構成": ["screenshot_home.png", "test1_langstone.png"],
     "2. 起動・終了と安全": ["screenshot_boot_menu.png", "pi5-startup-message-updated.png"],
-    "3. 設定画面": ["test1_frequency.png", "test1_symbolrate.png", "test1_fec.png", "test1_modulation.png", "test1_videosource_testpattern.png"],
-    "4. 送信前の設定": ["shonan_pi5_modulation_8psk_screen.png", "screenshot_streamoutput.png"],
+    "3. 設定画面": ["screenshot_settings.png"],
+    "4. 送信前の設定": ["screenshot_frequency.png", "screenshot_streamoutput.png", "screenshot_symbolrate.png",
+                    "screenshot_fec.png", "screenshot_modulation.png", "screenshot_videosource.png",
+                    "screenshot_rxgain.png", "screenshot_txpower.png", "screenshot_presets.png"],
     "5. RSSI測定": "screenshot_rssi.png",
-    "6. 送信画面": "test1_tx_onair.png",
-    "7. 受信画面": "test1_rx_video_locked.png",
-    "9. Help・機器試験・再起動": ["test1_diagnostic.png", "shonan-pi5-startup-pluto-restarting.png"],
+    "6. 送信画面": "screenshot_tx.png",
+    "7. 受信画面": "screenshot_rx.png",
+    "9. Help・機器試験・再起動": ["screenshot_manual.png", "screenshot_testequipment.png",
+                             "shonan-pi5-startup-pluto-restarting.png"],
 }
 
 MANUAL_SECTIONS = [
@@ -41,6 +44,7 @@ MANUAL_SECTIONS = [
         ("終了", "送信中・受信中の場合は、それぞれの画面で停止してからホーム画面の「電源オフ」を使用します。"),
     ]),
     ("3. 設定画面", [
+        ("表示言語", "画面の表示言語を「日本語」「English」から選びます。選ぶとすぐに全画面の表示が切り替わり、設定は保存されます。"),
         ("送信先（Pluto Tx）", "PlutoのIPアドレスを入力します。UDP-TSポートは8282固定(Pluto側)です。"),
         ("PA_Power/PTTコントローラ（ESP32）", "PA_Power/PTTコントローラ(ESP32+W5500、hardware/W5500_PA_PTT_Control)のIPアドレスを入力します。空欄なら連携しません。設定すると、送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源(Pluto+含む)を自動でON/OFFします。ホーム画面の「Pluto電源」カード(オプション機能、OPT表示)から手動での電源サイクル(OFF→3秒待機→ON)も行えます。"),
         ("オンデバイス復調",
@@ -61,14 +65,15 @@ MANUAL_SECTIONS = [
         ("映像ソース", "映像ソース画面でUSBカメラ、画像ファイル(png/jpg/jpeg/bmp、静止画を反復送信)、またはテストパターン(カラーバー)を選びます。RF切り分けではテストパターンを使用します。映像ソースが「カメラ」のときは「撮影」ボタンでカメラ映像をJPG(1920x1080)として撮影でき、ホームフォルダのPictures/Shonan_Liteに保存されます。保存した画像は「ファイル選択」(このフォルダから開きます)で送信画像として選べます。送信中は撮影できません。画面下部の「コールサイン」「備考」(任意)欄に入力した文字は映像に焼き込まれ、日時も右下に表示されます。各入力欄の右の選択欄で文字サイズ(コールサイン36〜256px、備考16〜64px)と文字色(白・黄・赤・緑・青・水色・橙・黒)を選べます。カメラ映像と画像ファイルに適用されます(テストパターンには元々コールサインが描かれているため適用されません)。送信映像の解像度はフルHD(1920x1080)固定で、縦横比が異なる映像は黒帯を付けて収めます。"),
         ("RXゲイン", "AGCをONにすると自動ゲイン、OFFにすると手動ゲインを使用します。手動時は受信状態を見ながらゲインを調整します。"),
         ("TX出力", "TX出力は接続先とアッテネータに合わせて設定します。0 dBが最大出力です。"),
+        ("プリセット", "ホーム画面の「プリセット」で、周波数・シンボルレート・FEC・変調方式・映像ソース・コールサイン等の現在の設定を5件まで登録できます。「登録/変更」を押して名前を付けると現在の設定を保存し、プリセット名を押すとその設定を呼び出してPlutoにも反映します。「削除」は確認のあと登録を消します。プリセット1は未登録の間「RFループバック」(437.000 MHz / 500 kS/s / QPSK / FEC 3/5、テストパターン、オンデバイス復調ON)として使えます。送受信中は登録・呼び出し・削除はできません。"),
     ]),
     ("5. RSSI測定", [
-        ("RSSI測定とは", "指定した範囲の周波数をスキャンして受信レベル(RSSI)をグラフ表示し、相手局の実際の周波数を素早く特定する機能です。中心周波数は周波数画面で設定した値です(未設定の場合は先に周波数画面で設定してください)。"),
+        ("RSSI測定とは", "指定した範囲の周波数をスキャンして受信レベル(RSSI)をグラフ表示する機能です。中心周波数は周波数画面で設定した値です(未設定の場合は先に周波数画面で設定してください)。設定画面の「オンデバイス復調」がOFF(通常運用)のときは送信せず、相手局の電波のRSSIを測って相手局の実際の周波数を素早く特定します(相手局が送信していなければ雑音だけなのでグラフは平らです)。ONのときはテスト用の機能で、自局も自動的に送信し、自分が送信した信号のRSSIを測ります。"),
         ("検索条件", "検索レンジを「±5MHz」「±10MHz」「±20MHz」から選びます(選択中のレンジは水色で強調されます)。ステップ(kHz)はテンキーで入力し、1 kHz以上を指定します。"),
         ("RXゲイン", "画面右側の「RXゲイン」で、AGC(自動調整)のON/OFFと手動ゲイン(0〜73 dB、「−」「+」ボタン。長押しで連続変更)を調整できます。設定はRXゲイン画面と共通で、検索中でも変更できます。ゲインを変えるとRSSIの値が変わるため、検索中に変更した場合はその周回を最初からやり直します。AGCがONの間は手動ゲインは変更できません。"),
         ("検索の実行", "「検索開始」を押すとスキャンを開始し、進行中はステータスに現在の周波数とRSSIが表示されます。画面右側の「検索方法」で、「連続」(既定)を選ぶと、スキャンは範囲の終わりまで進むと最初に戻り、「検索停止」を押すまで繰り返し実行されます。「1回」を選ぶと、範囲の終わりまで1回スキャンして自動で停止します。検索中に切り替えた場合は、実行中の周回が終わった時点から反映されます。どちらの場合も、他の画面へ移ると停止します。"),
         ("検索結果", "1回分のスキャンが終わるたびに「最も強い周波数」が更新されて表示されます(RSSIは値が小さいほど信号が強いことを示します)。"),
-        ("送信の自動開始について", "設定画面の「オンデバイス復調」がONの場合、「検索開始」を押すと自動的に送信を開始します(送信が既に始まっている場合は、一旦停止してから検索開始時点の設定でやり直します)。送信開始(またはやり直し)から3秒待ってからスキャンを始めます。この自動送信は「検索停止」を押すか他の画面へ移ると自動的に停止します。TXとRXを直結せず、必ず40 dB以上のアッテネータを介して接続してください。"),
+        ("送信の自動開始について", "設定画面の「オンデバイス復調」がONの場合、「検索開始」を押すと自動的に送信を開始します(送信が既に始まっている場合は、一旦停止してから検索開始時点の設定でやり直します)。この自動送信は、映像ソースの選択に関係なくテストパターンで行います(カメラが接続されていなくても送信でき、保存済みの映像ソースの設定は変わりません)。送信開始(またはやり直し)から3秒待ってからスキャンを始めます。この自動送信は「検索停止」を押すか、「1回」で範囲の終わりまで進むか、他の画面へ移ると自動的に停止します。TXとRXを直結せず、必ず40 dB以上のアッテネータを介して接続してください。"),
     ]),
     ("6. 送信画面", [
         ("送信画面の見方", "上部に映像プレビュー、下部に送信状態、シンボルレート、音声レベル、通信統計を表示します。テストパターン選択時はカラーバーが表示されます。送信停止中は「送信開始」ボタンが表示されます。"),
@@ -95,7 +100,7 @@ MANUAL_SECTIONS = [
     ("10. トラブルシューティング", [
         ("送信が始まらない", "送信画面へ移動しただけでは送信されません。「送信開始」を押し、映像ソース、Pluto IP、周波数、TX出力を確認します。"),
         ("受信できない", "送信側と受信側の周波数437.000 MHz、シンボルレート500 kS/s、FEC 3/5、変調QPSKを一致させ、TXが送信中であること、アッテネータと配線、RXゲインを確認します。"),
-        ("カメラ映像が出ない", "C920のUSB接続、映像ソース設定、カメラ権限を確認します。カラーバーへ切り替えて送信系だけを切り分けることもできます。"),
+        ("カメラ映像が出ない", "USBカメラ(C920等)の接続、映像ソース設定、カメラ権限を確認します。映像ソース画面のプレビューで映るか確認できます。カラーバーへ切り替えて送信系だけを切り分けることもできます。"),
         ("映像は黒いが受信している", "受信画面の状態表示と通信統計を確認し、映像ソース、H.264映像、送信開始状態を確認します。"),
         ("オンデバイス復調がONにならない", "ONにする操作をすると40 dBアッテネータの確認ポップアップが出ます。「いいえ」を選ぶとOFFへ戻る仕様です。アッテネータの接続を確認してから「はい」を選んでください。"),
     ]),
@@ -118,14 +123,19 @@ MANUAL_SECTIONS = [
 # English chapters for the Help screen. Mirrors MANUAL_SECTIONS chapter for
 # chapter and item for item; keep the two in sync when either changes.
 MANUAL_SCREENSHOTS_EN = {
-    "1. Screen Overview": ["test1_home.png", "test1_langstone.png"],
+    "1. Screen Overview": ["screenshot_home.png", "test1_langstone.png"],
     "2. Startup, Exit and Safety": ["screenshot_boot_menu.png", "pi5-startup-message-updated.png"],
-    "3. Settings Screen": ["test1_frequency.png", "test1_symbolrate.png", "test1_fec.png", "test1_modulation.png", "test1_videosource_testpattern.png"],
-    "4. Settings Before Transmitting": ["shonan_pi5_modulation_8psk_screen.png", "screenshot_streamoutput.png"],
+    "3. Settings Screen": ["screenshot_settings.png"],
+    "4. Settings Before Transmitting": ["screenshot_frequency.png", "screenshot_streamoutput.png",
+                                        "screenshot_symbolrate.png", "screenshot_fec.png",
+                                        "screenshot_modulation.png", "screenshot_videosource.png",
+                                        "screenshot_rxgain.png", "screenshot_txpower.png",
+                                        "screenshot_presets.png"],
     "5. RSSI Measurement": "screenshot_rssi.png",
-    "6. Transmit Screen": "test1_tx_onair.png",
-    "7. Receive Screen": "test1_rx_video_locked.png",
-    "9. Help, Diagnostic and App Restart": ["test1_diagnostic.png", "shonan-pi5-startup-pluto-restarting.png"],
+    "6. Transmit Screen": "screenshot_tx.png",
+    "7. Receive Screen": "screenshot_rx.png",
+    "9. Help, Diagnostic and App Restart": ["screenshot_manual.png", "screenshot_testequipment.png",
+                                            "shonan-pi5-startup-pluto-restarting.png"],
 }
 
 MANUAL_SECTIONS_EN = [
@@ -160,6 +170,7 @@ MANUAL_SECTIONS_EN = [
         ("Exit", "If transmitting or receiving, stop it on its own screen first, then use \"Power Off\" on the Home screen."),
     ]),
     ("3. Settings Screen", [
+        ("Display Language", "Choose the display language from \"日本語\" (Japanese) and \"English\". All screens switch immediately and the choice is saved."),
         ("Destination (Pluto Tx)", "Enter the Pluto's IP address. The UDP-TS port is fixed at 8282 (on the Pluto side)."),
         ("PA_Power/PTT Controller (ESP32)", "Enter the IP address of the PA_Power/PTT controller (ESP32 + W5500, hardware/W5500_PA_PTT_Control). Leave it empty to disable the link. When set, PTT follows TX start/stop and the 12 V power (including the Pluto+) is switched ON/OFF automatically at app start/exit. A manual power cycle (OFF → wait 3 seconds → ON) is also available from the \"Pluto Power\" card (optional feature, shown as OPT) on the Home screen."),
         ("On-device Demodulation",
@@ -181,14 +192,15 @@ MANUAL_SECTIONS_EN = [
         ("Video Source", "On the Video Source screen, choose a USB camera, an image file (png/jpg/jpeg/bmp, sent as a repeating still image), or a test pattern (color bars). Use the test pattern for RF isolation testing. When the video source is \"Camera\", the \"Capture\" button takes a still JPG (1920x1080) from the camera and saves it in Pictures/Shonan_Lite in the home folder. You can then choose the saved image as the TX image with \"File\" (it opens in that folder). Capturing is not possible while transmitting. The callsign and optional note entered in the \"Callsign\" and \"Note\" fields at the bottom of the screen are burned into the video, with the date and time shown at the bottom right. The selectors to the right of each field set the font size (callsign 36-256 px, note 16-64 px) and color (white, yellow, red, green, blue, cyan, orange, black). They apply to camera video and to an image file (the test pattern already has a callsign drawn into it, so it is not overlaid). The transmitted video is fixed at Full HD (1920x1080); video with a different aspect ratio is fitted with black bars."),
         ("RX Gain", "With AGC ON the gain is automatic; with AGC OFF, manual gain is used. When manual, adjust the gain while watching the reception state."),
         ("TX Power", "Set TX power to match the destination and attenuator. 0 dB is the maximum output."),
+        ("Presets", "With \"Presets\" on the Home screen you can save up to five sets of the current settings (frequency, symbol rate, FEC, modulation, video source, callsign and so on). Press \"Save\" and enter a name to store the current settings; press a preset name to recall it and also apply it to the Pluto. \"Delete\" removes a preset after confirmation. While preset 1 is not registered it works as \"RF Loopback\" (437.000 MHz / 500 kS/s / QPSK / FEC 3/5, test pattern, on-device demodulation ON). Presets cannot be saved, recalled or deleted while transmitting or receiving."),
     ]),
     ("5. RSSI Measurement", [
-        ("What RSSI Measurement does", "It scans a range of frequencies, graphs the received level (RSSI) and quickly identifies the actual frequency of the other station. The center frequency is the value set on the Frequency screen (if it is not set, set it there first)."),
+        ("What RSSI Measurement does", "It scans a range of frequencies and graphs the received level (RSSI). The center frequency is the value set on the Frequency screen (if it is not set, set it there first). When \"On-device demodulation\" in Settings is OFF (normal operation), it does not transmit and measures the RSSI of the other station's signal to quickly identify its actual frequency (if the other station is not transmitting, only noise is received and the graph is flat). When it is ON, this is a test feature: your own station also transmits automatically and the RSSI of your own signal is measured."),
         ("Search conditions", "Choose the search range from ±5 MHz, ±10 MHz and ±20 MHz (the selected range is highlighted in light blue). Enter the step (kHz) with the keypad; specify 1 kHz or more."),
         ("RX gain", "\"RX Gain\" on the right side of the screen lets you turn AGC (automatic adjustment) on or off and set the manual gain (0 to 73 dB with the \"−\" and \"+\" buttons; hold to change continuously). The setting is shared with the RX Gain screen and can be changed even while a search is running. Changing the gain changes the RSSI values, so if you change it during a search the current pass is restarted from the beginning. The manual gain cannot be changed while AGC is on."),
         ("Running a search", "Press \"Start Search\" to begin scanning; while it runs, the status shows the current frequency and RSSI. With \"Search Mode\" on the right side of the screen set to \"Repeat\" (default), the scan returns to the start when it reaches the end of the range and repeats until you press \"Stop Search\". With \"Once\", it scans the range one time and stops by itself. If you switch the mode during a search, it takes effect when the current pass finishes. In both modes the search stops when you move to another screen."),
         ("Search result", "Each time one pass of the scan finishes, the \"Strongest frequency\" is updated and shown (a smaller RSSI value means a stronger signal)."),
-        ("About automatic TX start", "When \"On-device demodulation\" in Settings is ON, pressing \"Start Search\" automatically starts transmitting (if TX is already running, it is stopped first and restarted with the settings in effect when the search begins). Scanning starts 3 seconds after TX starts (or restarts). This automatic transmission stops on its own when you press \"Stop Search\" or move to another screen. Never connect TX directly to RX; always use an attenuator of 40 dB or more."),
+        ("About automatic TX start", "When \"On-device demodulation\" in Settings is ON, pressing \"Start Search\" automatically starts transmitting (if TX is already running, it is stopped first and restarted with the settings in effect when the search begins). This automatic transmission always uses the test pattern regardless of the selected video source (it works without a camera, and the saved video source setting is not changed). Scanning starts 3 seconds after TX starts (or restarts). This automatic transmission stops on its own when you press \"Stop Search\", when \"Once\" reaches the end of the range, or when you move to another screen. Never connect TX directly to RX; always use an attenuator of 40 dB or more."),
     ]),
     ("6. Transmit Screen", [
         ("Reading the TX screen", "The video preview is at the top, and TX state, symbol rate, audio level and communication statistics are at the bottom. Color bars are shown when the test pattern is selected. The \"Start TX\" button is shown while TX is stopped."),
@@ -215,7 +227,7 @@ MANUAL_SECTIONS_EN = [
     ("10. Troubleshooting", [
         ("TX does not start", "Merely moving to the TX screen does not transmit. Press \"Start TX\" and check the video source, Pluto IP, frequency and TX power."),
         ("Cannot receive", "Match the frequency 437.000 MHz, symbol rate 500 kS/s, FEC 3/5 and modulation QPSK between TX and RX, and check that TX is transmitting, the attenuator and wiring, and the RX gain."),
-        ("No camera video", "Check the C920's USB connection, video source setting and camera permission. You can also switch to color bars to isolate the transmit chain."),
+        ("No camera video", "Check the USB camera (C920 or similar) connection, video source setting and camera permission. You can see whether it works in the preview on the Video Source screen. You can also switch to color bars to isolate the transmit chain."),
         ("Video is black but reception works", "Check the state display and communication statistics on the RX screen, and check the video source, H.264 video and TX start state."),
         ("On-device demodulation will not turn ON", "Turning it ON shows a 40 dB attenuator confirmation popup. Choosing \"No\" returns it to OFF by design. Check the attenuator connection, then choose \"Yes\"."),
     ]),

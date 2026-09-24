@@ -3,11 +3,35 @@
 Raspberry Pi 5 + ADALM-PlutoによるDVB-S2 DATV送受信タッチGUIシステム。
 本体は`pi5/`配下(Python/PyQt5、eglfs直描画)。
 
+## 主な機能
+
+- **送信**: 周波数・シンボルレート(333〜2000 kS/s)・FEC・変調方式(QPSK/8PSK)・TX出力を画面で設定し、
+  Pluto内蔵の`pluto_dvb`でDVB-S2送信する。FECは変調方式ごとに実際に動作する組み合わせだけを選べる
+  (QPSK: 1/2・3/5・8/9、8PSK: 3/5・8/9)。送信映像はフルHD(1920x1080)固定。
+- **映像ソース**: USBカメラ・画像ファイル(静止画を反復送信)・テストパターンから選ぶ。カメラ選択時は
+  「撮影」ボタンで静止画(JPG、`~/Pictures/Shonan_Lite/`)を撮り、そのまま送信画像に使える。
+  コールサイン・備考を文字サイズ・文字色を選んで映像へ焼き込める(日時も表示)。
+- **受信**: GNU Radio(gr-dvbs2rx)によるPi 5上での復調。LOCK状態・ビットレート・パケット数/エラー数を表示。
+- **RSSI測定**: 周波数を掃引して受信レベルをグラフ表示する。オンデバイス復調OFF(通常運用)では
+  相手局の電波を測り、ON(テスト用)では自局もテストパターンで自動送信して自分の信号を測る。
+- **プリセット**: 現在の設定を5件まで登録・呼び出し(プリセット1は未登録の間RFループバック試験用)。
+- **その他**: Pluto URIの自動検出、日本語/英語表示、日本語オンスクリーンキーボード、アプリ内Help、
+  機器試験、起動時のアプリ選択(Shonan_Lite / Langstone V3)。
+
 ## スクリーンショット
 
-| Home画面 | 受信画面(RX) | RSSI測定 | 出力設定 |
+実機(7インチLCD、800x480)の画面。映像はすべてテストパターンで撮影している。
+
+| Home画面 | 送信画面(TX) | 受信画面(RX) | RSSI測定 |
 | --- | --- | --- | --- |
-| ![Home画面](pi5/docs/images/screenshot_home.png) | ![受信画面](pi5/docs/images/screenshot_rx.png) | ![RSSI測定](pi5/docs/images/screenshot_rssi.png) | ![出力設定](pi5/docs/images/screenshot_streamoutput.png) |
+| ![Home画面](pi5/docs/images/screenshot_home.png) | ![送信画面](pi5/docs/images/screenshot_tx.png) | ![受信画面](pi5/docs/images/screenshot_rx.png) | ![RSSI測定](pi5/docs/images/screenshot_rssi.png) |
+
+| 映像ソース | 変調方式 | 出力設定 | プリセット |
+| --- | --- | --- | --- |
+| ![映像ソース](pi5/docs/images/screenshot_videosource.png) | ![変調方式](pi5/docs/images/screenshot_modulation.png) | ![出力設定](pi5/docs/images/screenshot_streamoutput.png) | ![プリセット](pi5/docs/images/screenshot_presets.png) |
+
+各画面の操作方法は、アプリ内の「ヘルプ」または操作説明書
+[`pi5/docs/shonan_pi5_operation_manual.docx`](pi5/docs/shonan_pi5_operation_manual.docx)を参照。
 
 ## インストール
 
@@ -183,6 +207,24 @@ SKIP_JA_KEYBOARD=1 SKIP_GNURADIO_BUILD=1 SKIP_LANGSTONE_BUILD=1 ./pi5/scripts/in
 
 ## 実機LCDの画面キャプチャー
 
+### アプリ内蔵のスクリーンショット機能(推奨)
+
+Shonan_Lite(GUI)は起動中、Unixドメインソケット`/tmp/shonan-pi5-gui.sock`でコマンドを受け付ける。
+`screenshot`を送ると、表示中の画面を`/tmp/shonan_lcd_actual.png`に保存する(GUIは止まらない)。
+`navigate:<画面名>`で任意の画面へ移動できる(画面名: `home` `tx` `rx` `frequency` `rssi`
+`symbolrate` `fec` `modulation` `videosource` `streamoutput` `rxgain` `txpower` `manual`
+`settings` `testequipment` `presets`)。
+
+```bash
+python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.connect('/tmp/shonan-pi5-gui.sock'); s.sendall(sys.argv[1].encode()); s.close()" navigate:rssi
+python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.connect('/tmp/shonan-pi5-gui.sock'); s.sendall(sys.argv[1].encode()); s.close()" screenshot
+```
+
+起動直後は「アプリ起動時にPlutoも再起動しています…」の表示(最大25秒)が写ることがあるので、
+起動から30秒ほど待ってから撮る。
+
+### kmsgrabによる取得
+
 Shonan_LiteはLCDへQt/DRMで直接描画しているため、`/dev/fb0`を読み出す方法では
 起動コンソールなど、最終合成前の内容になることがある(素の色1色などになる)。
 実際にLCDへ表示されている画面を取得する場合は、KMSのCRTC/Planeを指定して
@@ -284,7 +326,10 @@ Y方向に重ならない帯(Y=130〜295)に収めることで横方向をほぼ
 
 - [`pi5/docs/install_script_guide.md`](pi5/docs/install_script_guide.md) — install.shの詳細ガイド
 - [`pi5/docs/qtvirtualkeyboard_ja_build.md`](pi5/docs/qtvirtualkeyboard_ja_build.md) — 日本語オンスクリーンキーボードのビルド手順・ハマりどころ
-- [`pi5/gui/manual_content.py`](pi5/gui/manual_content.py) — アプリ内Helpの内容(章データ)
+- [`pi5/docs/shonan_pi5_operation_manual.docx`](pi5/docs/shonan_pi5_operation_manual.docx) — 操作説明書(各画面のスクリーンショット付き)
+- [`pi5/gui/manual_content.py`](pi5/gui/manual_content.py) — アプリ内Helpの内容(章データ)。操作説明書もこれから生成する
+- [`pi5/docs/build_operation_manual.py`](pi5/docs/build_operation_manual.py) — 操作説明書(DOCX)の生成スクリプト
+  (`python pi5/docs/build_operation_manual.py`、python-docxが必要)
 - [`pi5/third_party/rpi-dvbs2-receiver-gui/`](pi5/third_party/rpi-dvbs2-receiver-gui/) — GNU Radio/gr-dvbs2rx受信フローグラフの参考実装(kazushinjo/rpi-dvbs2-receiver-guiより取り込み)
 
 ## クレジット
