@@ -107,14 +107,17 @@ class SettingsScreen(SettingsSubScreen):
         self.ptt_controller_ip_edit.setPlaceholderText(tr("未使用の場合は空欄のまま", "Leave empty if not used"))
         self.ptt_controller_ip_edit.editingFinished.connect(self._save_ptt_controller_ip)
         self.body_layout.addWidget(self.ptt_controller_ip_edit)
-        self.body_layout.addWidget(QtWidgets.QLabel(tr(
+        ptt_note = QtWidgets.QLabel(tr(
             "hardware/W5500_PA_PTT_Control のESP32+W5500ボードのIPアドレス。"
             "送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源を自動切替します。"
             "空欄なら連携しません。",
             "IP address of the ESP32 + W5500 board (hardware/W5500_PA_PTT_Control). "
             "PTT follows TX start/stop and the 12 V power is switched automatically at "
             "app start/exit. Leave empty to disable the link."
-        )))
+        ))
+        # ★長い説明文(特に英語)が折り返されずに画面の右端で切れていたため、折り返す。
+        ptt_note.setWordWrap(True)
+        self.body_layout.addWidget(ptt_note)
 
         self.body_layout.addWidget(self._section_label(tr("オンデバイス復調", "On-device Demodulation")))
         self.on_device_checkbox = QtWidgets.QCheckBox(tr("オンデバイス復調 (GNU Radio)", "On-device demodulation (GNU Radio)"))
