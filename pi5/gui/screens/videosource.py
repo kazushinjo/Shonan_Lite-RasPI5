@@ -108,6 +108,11 @@ class VideoSourceScreen(SettingsSubScreen):
             "QPushButton:disabled { color: #777777; background-color: #171a1c; }"
         )
         self.delete_captures_btn.clicked.connect(self._delete_all_captures)
+        # ★撮影中は撮影ボタンを無効にするが、押した直後のボタンがフォーカスを持っていると
+        # Qtがフォーカスを次の部品(コールサイン入力欄)へ移し、オンスクリーンキーボードが
+        # 出て撮影完了の案内(OKボタン)を隠してしまう(Pi4実機で確認)。フォーカスを持たせない。
+        self.capture_btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.delete_captures_btn.setFocusPolicy(QtCore.Qt.NoFocus)
         capture_row = QtWidgets.QHBoxLayout()
         capture_row.setSpacing(8)
         capture_row.addWidget(self.capture_btn, 1)
