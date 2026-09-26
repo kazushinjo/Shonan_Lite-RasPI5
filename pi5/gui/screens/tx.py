@@ -2,7 +2,7 @@
 
 レイアウトはモック(shonan-16screens-mock-v4.png)の送信カードを踏襲: 左に映像
 プレビュー、右に送信ステータス(周波数/シンボルレート/変調方式/FEC、及び
-出力/パケット数/フレーム数)、下段に開始/停止ボタンを並べる。
+出力減衰/パケット数/フレーム数)、下段に開始/停止ボタンを並べる。
 配色は既存のダークテーマを維持する。
 """
 from __future__ import annotations
@@ -98,7 +98,7 @@ class TxScreen(SettingsSubScreen):
         stats_grid.setVerticalSpacing(6)
         stats_grid.setColumnStretch(0, 1)
         stats_grid.setColumnStretch(1, 1)
-        self.power_value = self._add_field(stats_grid, 0, 0, tr("出力", "Power"))
+        self.power_value = self._add_field(stats_grid, 0, 0, tr("出力減衰", "Attenuation"))
         self.packets_value = self._add_field(stats_grid, 0, 1, tr("パケット数", "Packets"))
         self.frames_value = self._add_field(stats_grid, 1, 0, tr("フレーム数", "Frames"))
         status_layout.addLayout(stats_grid)
@@ -171,7 +171,7 @@ class TxScreen(SettingsSubScreen):
         self.symbol_value.setText(f"{settings.symbol_rate_msps * 1000:.0f} kS/s")
         self.modulation_value.setText(settings.modulation_scheme)
         self.fec_value.setText(settings.fec_rate)
-        self.power_value.setText(f"{settings.tx_power_db:.0f} dBm")
+        self.power_value.setText(f"{settings.tx_power_db:.0f} dB")
         self.packets_value.setText("0")
         self.frames_value.setText("0")
         self.update_navigation_buttons()
