@@ -37,8 +37,8 @@ diff -ruN a/Font.h b/Font.h
      0x20, 0x00, 0x00, 0x00, 0x00, 0x30, 0x10, 0x10, 0x20,   // 59     ;
      0x04, 0x08, 0x10, 0x20, 0x40, 0x20, 0x10, 0x08, 0x04,   // 60     <
 diff -ruN a/Graphics.h b/Graphics.h
---- a/Graphics.h	2026-09-04 02:45:28.037026600 +0900
-+++ b/Graphics.h	2026-09-04 02:45:28.071304800 +0900
+--- a/Graphics.h
++++ b/Graphics.h
 @@ -3,12 +3,33 @@
  #include <stdlib.h>
  #include <string.h>
@@ -73,7 +73,7 @@ diff -ruN a/Graphics.h b/Graphics.h
  char *fbp = 0;
  int fbfd = 0;
  long int screenSize = 0;
-@@ -55,12 +76,64 @@
+@@ -55,13 +76,65 @@
   while(s[p]!=0);
  }
  
@@ -93,7 +93,7 @@ diff -ruN a/Graphics.h b/Graphics.h
    int descender;
 +  int cellW = 8*textSize;
 +  int cellH = 9*textSize;
-+
+ 
 +  if (ttFontButtonReady)
 +    {
 +      int xx, yy;
@@ -135,9 +135,10 @@ diff -ruN a/Graphics.h b/Graphics.h
 +      currentX = currentX + cellW;
 +      return;
 +    }
- 
++
    if(font[ch][0] & 0x80)
    {
+   descender=3*textSize;
 @@ -82,7 +155,7 @@
              setLargePixel(currentX+col*textSize,currentY+row*textSize+descender,textSize,foreColourR,foreColourG,foreColourB);
           }
@@ -147,10 +148,13 @@ diff -ruN a/Graphics.h b/Graphics.h
              setLargePixel(currentX+col*textSize,currentY+row*textSize+descender,textSize,backColourR,backColourG,backColourB);
           }
        }
-@@ -104,27 +177,142 @@
- 
- }
- 
+@@ -101,30 +174,145 @@
+     setPixel(currentX+xi,currentY+yi,backColourR,backColourG,backColourB);
+     }
+   }
++
++}
++
 +// ★Shonan_Lite-pi5統合版パッチ: ボタン文字・大きな周波数表示で共用するTTF
 +// フォント(Liberation Sans Bold、apt版fonts-liberation2同梱)を読み込む。
 +void initTTFont(void)
@@ -236,7 +240,7 @@ diff -ruN a/Graphics.h b/Graphics.h
 +      penX += (g->advance.x >> 6);
 +    }
 +}
-+
+ 
 +// 角丸ボタン枠(1px)を描画する。直線部は角の半径分だけ内側にとどめ、4隅は
 +// 三角関数で四分円を描く(高さ・幅とも小さいボタンなので負荷は無視できる)。
 +static void drawRoundedButtonBorder(int x, int y, int w, int h, int radius, int R, int G, int B)
@@ -262,8 +266,8 @@ diff -ruN a/Graphics.h b/Graphics.h
 +      setPixel(x + radius - dx, y + h - radius + dy, R, G, B);
 +      setPixel(x + w - radius + dx, y + h - radius + dy, R, G, B);
 +    }
-+}
-+
+ }
+ 
  void displayButton(char*s)
  {
  int saveX=currentX;
@@ -388,9 +392,9 @@ diff -ruN a/Graphics.h b/Graphics.h
  currentY=saveY;
  }
 diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
---- a/LangstoneGUI_Pluto.c	2026-09-04 02:45:28.105642000 +0900
-+++ b/LangstoneGUI_Pluto.c	2026-09-04 02:45:28.139361500 +0900
-@@ -14,15 +14,22 @@
+--- a/LangstoneGUI_Pluto.c
++++ b/LangstoneGUI_Pluto.c
+@@ -14,16 +14,29 @@
  #include "hmi.h"
  #include "Morse.c"
  #include <netdb.h>
@@ -410,11 +414,18 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  
  char plutoip[30];
  
-+void displayFreqTTF(double fr);
++// ★Shonan_Lite-pi5統合版パッチ(pi4版から移植): PA_Power/PTTコントローラ
++// (ESP32+W5500、hardware/W5500_PA_PTT_Control)のIPアドレス。run_pluto起動
++// スクリプトが環境変数PTT_CONTROLLER_HOSTとして設定画面のptt_controller_host
++// を渡す。空文字なら連携しない(未接続環境でもハードウェアPTTの動作に影響しない)。
++char pttControllerHost[64] = "";
  
++void displayFreqTTF(double fr);
++
  void setFreq(double fr);
  void displayFreq(double fr);
-@@ -166,9 +173,13 @@
+ void setFreqInc();
+@@ -166,9 +179,13 @@
  //GUI Layout values X and Y coordinates for each group of buttons.
  
  #define volButtonX 660
@@ -430,7 +441,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  #define ritButtonX 670
  #define ritButtonY 60
  #define funcButtonsY 429
-@@ -193,8 +204,21 @@
+@@ -193,8 +210,21 @@
  #define settingY 390
  #define popupX 30
  #define popupY 374
@@ -454,7 +465,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  #define sMeterX 2
  #define sMeterY 5
  #define sMeterWidth 170
-@@ -315,9 +338,12 @@
+@@ -315,9 +345,12 @@
  FILE *txfftstream;
  float buf[512][130];
  int points=512;
@@ -469,7 +480,26 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  unsigned char * palette;
  int HzPerBin=94;                        //calculated from FFT width and number of samples. Width=48000 number of samples =512
  int bwBarStart=3;
-@@ -364,6 +390,7 @@
+@@ -351,7 +384,17 @@
+   strcat(plutoip,penv);
+ 
+   printf("plutoip = %s\n",plutoip);
+-  
++
++  // ★Shonan_Lite-pi5統合版パッチ(pi4版から移植): PA_Power/PTTコントローラの
++  // IPアドレス(run_pluto起動スクリプトがsettings.jsonのptt_controller_host
++  // を環境変数経由で渡す)。未設定/空文字なら連携しない。
++  char * pttEnv = getenv("PTT_CONTROLLER_HOST");
++  if(pttEnv!=NULL)
++    {
++      strncpy(pttControllerHost,pttEnv,sizeof(pttControllerHost)-1);
++      pttControllerHost[sizeof(pttControllerHost)-1]='\0';
++    }
++
+   startGNURadio();
+    
+   initUDP();
+@@ -364,6 +407,7 @@
    initPluto();
    initFifos();
    initScreen();
@@ -477,7 +507,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    initGPIO();
    printf("Initialising Touch at %s\n",touchPath);
    if(touchPresent) initTouch(touchPath);
-@@ -655,41 +682,52 @@
+@@ -655,41 +699,52 @@
      
          //draw waterfall
          for(int r=0;r<rows;r++)
@@ -545,7 +575,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
          }
            
            //draw Bandwidth indicator
-@@ -712,68 +750,68 @@
+@@ -712,68 +767,68 @@
             centreShift=0;          
            }
  
@@ -648,7 +678,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
                displayStr(" +2.5k   ");
              break;
            }
-@@ -832,23 +870,20 @@
+@@ -832,23 +887,20 @@
            
            
            //Draw S meter
@@ -675,7 +705,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
            drawLine(sMeterX+6+110,sMeterY+5+ln,redbit,sMeterY+5+ln,255,0,0);
            drawLine(redbit,sMeterY+5+ln,sMeterX+6+160,sMeterY+5+ln,0,0,0);
            }
-@@ -969,10 +1004,7 @@
+@@ -969,10 +1021,7 @@
               if(sMeter<0) sMeter=0;
            
            //Draw PO meter
@@ -687,7 +717,54 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  
            for(int ln=0;ln<10;ln++)
            {
-@@ -1460,9 +1485,10 @@
+@@ -1384,6 +1433,21 @@
+   lgGpioClaimOutput(gpiohandle,0,bandPin7,0); 
+   lgGpioClaimOutput(gpiohandle,0,bandPin8,0); 
+   lastKey=1;
++}
++
++// ★Shonan_Lite-pi5統合版パッチ(pi4版から移植): ハードウェアPTTスイッチの
++// ON/OFFをPA_Power/PTTコントローラ(ESP32+W5500)へ中継する。GUIのメイン
++// ループから呼ばれるため、ESP32が未接続/無応答でもGUIが固まらないよう
++// curlをバックグラウンド起動する(`GET /tx?state=on|off`、Python版
++// backend.pyの_send_ptt_request()と同じ経路)。応答は確認しない(投げっぱなし)。
++void notifyEspPtt(int state)
++{
++  char cmd[160];
++  if(pttControllerHost[0]=='\0') return;
++  snprintf(cmd,sizeof(cmd),
++    "curl -s -m 1 \"http://%s/tx?state=%s\" >/dev/null 2>&1 &",
++    pttControllerHost, state ? "on" : "off");
++  system(cmd);
+ }
+ 
+ void processGPIO(void)
+@@ -1394,7 +1458,7 @@
+   p1=lgGpioRead(gpiohandle,pttPin);
+   k1=lgGpioRead(gpiohandle,keyPin);
+ 
+-  
++
+     if(p1==0)             //if the hardware PTT has been pressed
+         {
+           if(ptt==0)
+@@ -1402,6 +1466,7 @@
+               ptt=1;
+               if(ptts==1) setPtts(0);                       //turn off the touchscreen PTT.
+               setTx(ptt|ptts);
++              notifyEspPtt(1);
+             }
+         }
+      else
+@@ -1410,6 +1475,7 @@
+             {
+               ptt=0;
+               setTx(ptt|ptts);
++              notifyEspPtt(0);
+             }
+         }
+ 
+@@ -1460,9 +1526,10 @@
      }
    displayButton("SQL");
    textSize=2;
@@ -700,7 +777,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(sqlStr,"%d",squelch);
    displayStr(sqlStr);
  }
-@@ -1478,8 +1504,7 @@
+@@ -1478,8 +1545,7 @@
    else
      {
        setForeColour(0,0,0);
@@ -710,12 +787,13 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
      }
    gotoXY(ritButtonX,ritButtonY);
    displayButton("RIT");
-@@ -1900,14 +1925,6 @@
+@@ -1899,15 +1965,7 @@
+       return;
        }
      }
- 
--//RIT Zero Button
 -
+-//RIT Zero Button
+ 
 -if(buttonTouched(ritButtonX,ritButtonY+buttonSpaceY))    //rit zero
 -    {
 -     setRit(0);
@@ -725,39 +803,26 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  if(buttonTouched(sMeterX,sMeterY))                        //touch on s-Meter
  {
     if(sMeterType == 0)
-@@ -2062,15 +2079,49 @@
+@@ -2061,16 +2119,36 @@
+          sendFifo("Q");       //kill the SDR
           clearScreen();
           writeConfig();
++         // ★Shonan_Lite-pi5統合版パッチ(切替時間の短縮): 以前はここでPluto+を
++         // rebootし、PA_Power/PTTコントローラの12V電源(Pluto+を含む)もOFFに
++         // していたが、切替のたびに数十秒かかるためやめた。実機試験の結果、
++         // Pluto+を再起動しなくてもDATV側は正常に動作すること、ただし
++         // Langstoneは受信中に送信LO(altvoltage1)をpowerdownしたまま終了し、
++         // そのままではDATV送信の電波が出ないことを確認した。そこで送信LOだけを
++         // 元に戻してから切り替える(Shonan_Lite側main.pyも起動時に同じ復元を行う)。
++         PlutoTxEnable(1);
           iio_context_destroy(plutoctx);
 -         sleep(2);                  
-+         // ★Shonan_Lite-pi5統合版パッチ:「GOTO SHONAN_LITE」ボタン押下処理。
-+         // 以前はPi5自体をrebootしてブート時マーカーファイルで戻り先を
-+         // 切り替える方式だったが、shonan-boot-menu.service導入に伴い
-+         // shonan-gui.service/langstone.service/shonan-boot-menu.serviceが
-+         // 互いにsystemdのConflicts=で排他制御されるようになったため、
-+         // rebootせずsystemctl startで直接切り替えられる
-+         // (Shonan_Lite-pi5側install.sh、pi5/scripts/install.sh 9/9参照)。
-+         // ★Pluto+はTX/RX切替を繰り返した後、IIOコンテキストが詰まったような
-+         // 状態(fmcomms2_source: Unable to refill buffer)になることがあり、
-+         // その状態のままShonan_Lite側に戻るとRX/TXが正常動作しないことがある
-+         // (実機で確認)。切替のたびに必ずPluto+側はrebootしてクリーンな
-+         // 状態にする(Pi5自体のrebootは不要になったが、これは維持する)。
-+         {
-+           // ★元は char cmd[128] だったが、実際に生成される文字列は167文字あり
-+           // "-o PubkeyAuth"の途中で切り詰められ、root@<IP> rebootが丸ごと
-+           // 欠落してsshがエラー終了、Pluto+にreboot命令が届いていなかった
-+           // (実機で確認、「戻る」時だけPluto+がrebootされない不具合の原因)。
-+           char cmd[320];
-+           snprintf(cmd, sizeof(cmd),
-+             "sshpass -p analog ssh -o StrictHostKeyChecking=accept-new "
-+             "-o ConnectTimeout=6 -o PreferredAuthentications=password "
-+             "-o PubkeyAuthentication=no root@%s reboot", plutoip+3);
-+           system(cmd);
-+         }
++         // Shonan_Lite(main.py)とrun_plutoに「Langstoneからの切替」であることを
++         // 伝える印。Shonan_Liteは起動時のPluto+再起動を省き、run_plutoは
++         // GUI終了後のPluto+再起動を省く(/tmp配下なのでPi5の再起動で消える)。
++         system("touch /tmp/shonan_switch_from_langstone");
 +         // ★systemd(langstone.service)は$HOMEを自動設定しないため、絶対パスで
-+         // マーカーファイルを削除する(念のため、ConditionPathExists対策として
-+         // 維持。systemctl start自体は直接指定したユニットを起動するので
-+         // 本来は無くても動くが、手動でsystemctl restartされた場合の保険)。
++         // マーカーファイルを削除する(ConditionPathExists対策)。
 +         system("rm -f /home/pi/.pi5_boot_mode_langstone");
 +         sync();
 +         // ★sudoers.d/shonan-pi5-rebootで許可済みのコマンド(shonan-boot-menu.py
@@ -778,7 +843,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  if(buttonTouched(funcButtonsX+buttonSpaceX*6,funcButtonsY))   //Button 7 = PTT  or OFF
      {
      if(inputMode==FREQ)
-@@ -2092,7 +2143,8 @@
+@@ -2092,7 +2170,8 @@
        sendFifo("Q");       //kill the SDR 
        writeConfig();
        iio_context_destroy(plutoctx);
@@ -788,7 +853,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
        sleep(2);
        system("sudo poweroff");                          
        return;      
-@@ -2122,7 +2174,7 @@
+@@ -2122,7 +2201,7 @@
  
  
  //touch on spectrum display increments the FFT Bandwidth
@@ -797,7 +862,17 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    {
      bandFFTBW[band]++;
      if(bandFFTBW[band] > 3)  bandFFTBW[band] = 0;
-@@ -2312,9 +2364,10 @@
+@@ -2223,6 +2302,9 @@
+ 
+ void setPtts(int p)
+ {
++ // ★Shonan_Lite-pi5統合版パッチ: 画面上のソフトウェアPTTボタンも、ハードウェア
++ // PTTスイッチ(processGPIO側)と同様にESP32 PTTコントローラへ中継する。
++ notifyEspPtt(p);
+  if(p==1)
+  {
+   ptts=1;
+@@ -2312,9 +2394,10 @@
    sendFifo(volStr);
    setForeColour(0,255,0);
    textSize=2;
@@ -810,7 +885,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(volStr,"%d",vol);
    displayStr(volStr);
    
-@@ -2327,9 +2380,10 @@
+@@ -2327,9 +2410,10 @@
    sprintf(sqlStr,"S%d",sql);
    setForeColour(0,255,0);
    textSize=2;
@@ -823,7 +898,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(sqlStr,"%d",sql);
    displayStr(sqlStr);
    configCounter=configDelay;
-@@ -2366,11 +2420,8 @@
+@@ -2366,11 +2450,8 @@
      gotoXY(ritButtonX,ritButtonY);
      setForeColour(0,255,0);
      displayButton("RIT");
@@ -836,7 +911,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  inputMode=m;
  
  if(inputMode==FREQ)
-@@ -2402,9 +2453,6 @@
+@@ -2402,9 +2483,6 @@
      gotoXY(ritButtonX,ritButtonY);
      setForeColour(255,0,0);
      displayButton("RIT");
@@ -846,17 +921,45 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    }
  
  }
-@@ -2773,46 +2821,138 @@
+@@ -2773,47 +2851,139 @@
    setPlutoTxFreq(txfreqhz);          //Control Pluto directly to bypass problems with Gnu Radio Sink
  }
  
+-void displayFreq(double fr)
 +// ★Shonan_Lite-pi5統合版パッチ: 周波数表示スロット(48x54px)1文字分を
 +// FreeTypeでアンチエイリアス描画する。先にスロットを背景色で塗りつぶし、
 +// その上にグリフのカバレッジ(0-255)を前景色とブレンドして重ねる。
 +// codepoint==' 'の場合は背景塗りつぶしのみ(空白扱い)。ttFaceはボタン描画
 +// (displayButton等、Graphics.h参照)と共用のため、毎回このサイズへ設定し直す。
 +static void drawFreqGlyphTTF(int codepoint, int slotX, int baselineY, int R, int G, int B)
-+{
+ {
+-  long long freqhz;
+-  char digit[16]; 
+-  
+-  fr=fr+0.0000001;   // correction for rounding errors.
+-  freqhz=fr*1000000;    
+-  freqhz=freqhz+100000000000;     //force it to be 12 digits long
+-  sprintf(digit,"%lld",freqhz);
+-  
+-  gotoXY(freqDisplayX,freqDisplayY);
+-  setForeColour(0,0,255);
+-  textSize=6;
+-  if(digit[1]>'0') displayChar(digit[1]); else displayChar(' ');
+-  if((digit[1]>'0') | (digit[2]>'0')) displayChar(digit[2]); else displayChar(' ');
+-  if((digit[1]>'0') | (digit[2]>'0') | digit[3]>'0')  displayChar(digit[3]); else displayChar(' ');
+-  displayChar(digit[4]);
+-  displayChar(digit[5]);
+-  displayChar('.');
+-  displayChar(digit[6]);
+-  displayChar(digit[7]);
+-  displayChar(digit[8]);
+-  displayChar('.');
+-  displayChar(digit[9]);
+-  displayChar(digit[10]);
+-  
+-// Underline the currently selected tuning digit
+-  
+-  for(int dtd=0;dtd<12;dtd++)
 +  // ★freqDisplayCharHeight(54px)はドットフォント時代のセル高で、78pxの
 +  // TTFグリフはbaselineY(freqDisplayY+60)基準で描画すると曲線を含む数字
 +  // (6/3/2等)の底がこの範囲より下(y>freqDisplayY+53)にはみ出すことがある。
@@ -864,9 +967,16 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +  // 消されずに残り「前の桁の数字の残像」に見える不具合があった。下線の
 +  // 行(freqDisplayY+freqDisplayCharHeight+10)の手前まで広めにクリアする。
 +  for (int y = 0; y < freqDisplayCharHeight+18; y++)
-+    {
+     {
+-      gotoXY(freqDisplayX+dtd*freqDisplayCharWidth+4,freqDisplayY+freqDisplayCharHeight+5);
+-      int bb = 0;
+-      if (dtd==tuneDigit) bb=255;
+-      for(int p=0; p < freqDisplayCharWidth; p++)
 +      for (int x = 0; x < freqDisplayCharWidth; x++)
-+        {
+         {
+-          setPixel(currentX+p,currentY+1,0,0,bb);
+-          setPixel(currentX+p,currentY+2,0,0,bb);
+-          setPixel(currentX+p,currentY+3,0,0,bb);
 +          setPixel(slotX + x, freqDisplayY + y, backColourR, backColourG, backColourB);
 +        }
 +    }
@@ -891,7 +1001,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +          int blG = backColourG + ((G - backColourG) * cov) / 255;
 +          int blB = backColourB + ((B - backColourB) * cov) / 255;
 +          setPixel(originX + col, originY + row, blR, blG, blB);
-+        }
+         }
 +    }
 +}
 +
@@ -927,48 +1037,15 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +  drawFreqGlyphTTF(digit[10], slotX, baselineY, R, G, B); slotX += freqDisplayCharWidth;
 +}
 +
- void displayFreq(double fr)
- {
-   long long freqhz;
--  char digit[16]; 
--  
++void displayFreq(double fr)
++{
++  long long freqhz;
 +  char digit[16];
 +
-   fr=fr+0.0000001;   // correction for rounding errors.
--  freqhz=fr*1000000;    
++  fr=fr+0.0000001;   // correction for rounding errors.
 +  freqhz=fr*1000000;
-   freqhz=freqhz+100000000000;     //force it to be 12 digits long
-   sprintf(digit,"%lld",freqhz);
--  
--  gotoXY(freqDisplayX,freqDisplayY);
--  setForeColour(0,0,255);
--  textSize=6;
--  if(digit[1]>'0') displayChar(digit[1]); else displayChar(' ');
--  if((digit[1]>'0') | (digit[2]>'0')) displayChar(digit[2]); else displayChar(' ');
--  if((digit[1]>'0') | (digit[2]>'0') | digit[3]>'0')  displayChar(digit[3]); else displayChar(' ');
--  displayChar(digit[4]);
--  displayChar(digit[5]);
--  displayChar('.');
--  displayChar(digit[6]);
--  displayChar(digit[7]);
--  displayChar(digit[8]);
--  displayChar('.');
--  displayChar(digit[9]);
--  displayChar(digit[10]);
--  
--// Underline the currently selected tuning digit
--  
--  for(int dtd=0;dtd<12;dtd++)
--    {
--      gotoXY(freqDisplayX+dtd*freqDisplayCharWidth+4,freqDisplayY+freqDisplayCharHeight+5);
--      int bb = 0;
--      if (dtd==tuneDigit) bb=255;
--      for(int p=0; p < freqDisplayCharWidth; p++)
--        {
--          setPixel(currentX+p,currentY+1,0,0,bb);
--          setPixel(currentX+p,currentY+2,0,0,bb);
--          setPixel(currentX+p,currentY+3,0,0,bb);
--        }
++  freqhz=freqhz+100000000000;     //force it to be 12 digits long
++  sprintf(digit,"%lld",freqhz);
 +
 +  // ★Shonan_Lite-pi5統合版パッチ: 周波数表示の文字色を青から水色に変更。
 +  setForeColour(0,200,255);
@@ -976,7 +1053,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +  if (ttFontReady)
 +    {
 +      displayFreqTTF(fr);
-     }
++    }
 +  else
 +    {
 +      gotoXY(freqDisplayX,freqDisplayY);
@@ -993,8 +1070,8 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +      displayChar('.');
 +      displayChar(digit[9]);
 +      displayChar(digit[10]);
-+    }
-+
+     }
+ 
 +// ★Shonan_Lite-pi5統合版パッチ: 選択中のチューニング桁を下線で示す。
 +// 元は全12桁に線を描画し非選択桁も黒線として見えてしまっていたため、
 +// 選択中の桁(tuneDigit)だけ描画するように変更。色は青、位置は元より
@@ -1015,10 +1092,11 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +          }
 +      }
 +  }
- 
++
  }
  
-@@ -3926,7 +4063,8 @@
+ void setFreq(double fr)
+@@ -3926,7 +4096,8 @@
  {
     printf("Starting GNU Radio\n");
     FFTTimeout = FFTTIMEOUT * 5;                                //allow time to start
@@ -1029,9 +1107,9 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  
  void restartGNURadio(void)
 diff -ruN a/run_pluto b/run_pluto
---- a/run_pluto	2026-09-04 02:45:28.170291400 +0900
-+++ b/run_pluto	2026-09-04 02:45:28.203626800 +0900
-@@ -7,7 +7,21 @@
+--- a/run_pluto
++++ b/run_pluto
+@@ -7,8 +7,36 @@
  
  $HOME/Langstone/Screen_Message "Langstone Loading"
  
@@ -1052,9 +1130,24 @@ diff -ruN a/run_pluto b/run_pluto
 +    print('192.168.0.10')
 +" 2>/dev/null)
  
++# ★Shonan_Lite-pi5統合版パッチ(pi4版から移植): PA_Power/PTTコントローラ
++# (ESP32+W5500、hardware/W5500_PA_PTT_Control)のIPアドレス。空なら未接続
++# として扱う(GUI_Pluto側でハードウェアPTT連携をスキップする)。
++export PTT_CONTROLLER_HOST=$(python3 -c "
++import json
++from pathlib import Path
++p = Path.home() / '.config' / 'shonan-pi5' / 'settings.json'
++try:
++    d = json.loads(p.read_text())
++    print(d.get('ptt_controller_host', ''))
++except Exception:
++    print('')
++" 2>/dev/null)
++
  #Create command pipe
  if test -e /tmp/langstoneTRx ;then
-@@ -21,8 +35,13 @@
+ rm /tmp/langstoneTRx
+@@ -21,8 +49,13 @@
     sudo amixer -c 2 cset numid=8 50%  > /dev/null 2>&1
     $HOME/Langstone/Screen_Message "Langstone Loading" "Checking Pluto"
     
@@ -1069,7 +1162,7 @@ diff -ruN a/run_pluto b/run_pluto
     do
        (ping -c1 $PLUTO_IP 2>/dev/null |grep -q received) && break
         retry=$[${retry}+1]
-@@ -31,7 +50,7 @@
+@@ -31,7 +64,7 @@
  
     #Check if Pluto failed to respond
  
@@ -1078,6 +1171,21 @@ diff -ruN a/run_pluto b/run_pluto
        clear
        $HOME/Langstone/Screen_Message "Pluto Failed to Respond" "Check Power" "And Connections"
        sleep 5
+@@ -49,9 +82,14 @@
+ # Start the GUI (which will also start the GNURadio module
+ 
+    $HOME/Langstone/GUI_Pluto > /tmp/LangstoneGUI_Pluto.log 2>&1
++   # ★Shonan_Lite-pi5統合版パッチ(切替時間の短縮): 「GOTO SHONAN_LITE」で
++   # Shonan_Liteへ切り替えた場合(GUI_Plutoが/tmp/shonan_switch_from_langstoneを
++   # 作る)は、Pluto+を再起動しない(Shonan_Liteがそのまま使うため)。
++   if [ ! -e /tmp/shonan_switch_from_langstone ]; then
+    # Send a reboot command to Pluto after GUI Exits
+    ssh-keygen -f "$HOME/.ssh/known_hosts" -R $PLUTO_IP >/dev/null 2>&1
+    timeout 2 sshpass -p analog ssh -o StrictHostKeyChecking=no root@$PLUTO_IP 'PATH=/bin:/sbin:/usr/bin;reboot'  >/dev/null 2>&1
++   fi
+ 
+ else
+    echo Langstone is already running. Use ./stop first.
 diff -ruN a/stop_pluto b/stop_pluto
 --- a/stop_pluto	2026-09-04 02:45:28.239986000 +0900
 +++ b/stop_pluto	2026-09-04 02:45:28.270986900 +0900

@@ -1442,21 +1442,6 @@ void notifyEspPtt(int state)
   system(cmd);
 }
 
-// ★Shonan_Lite-pi5統合版パッチ: PA_Power/PTTコントローラの12V電源チャンネル
-// (GPIO26、`GET /ch?idx=0&state=on|off`、Python版backend.pyの
-// _send_ptt_channel_state()と同じ経路)を直接ON/OFFする。Langstone V3自身は
-// 通常このチャンネルに触れない(notifyEspPtt()同様PTTのみ)ため、
-// Shonan_Lite-RasPI5との切替時にだけ明示的に呼ぶ。
-void notifyEspPower(int state)
-{
-  char cmd[160];
-  if(pttControllerHost[0]=='\0') return;
-  snprintf(cmd,sizeof(cmd),
-    "curl -s -m 1 \"http://%s/ch?idx=0&state=%s\" >/dev/null 2>&1 &",
-    pttControllerHost, state ? "on" : "off");
-  system(cmd);
-}
-
 void processGPIO(void)
 {
 int p1=1;
@@ -2126,41 +2111,23 @@ if(buttonTouched(funcButtonsX+buttonSpaceX*5,funcButtonsY))    //Button 6 = BEAC
          sendFifo("Q");       //kill the SDR
          clearScreen();
          writeConfig();
+         // ★Shonan_Lite-pi5統合版パッチ(切替時間の短縮): 以前はここでPluto+を
+         // rebootし、PA_Power/PTTコントローラの12V電源(Pluto+を含む)もOFFに
+         // していたが、切替のたびに数十秒かかるためやめた。実機試験の結果、
+         // Pluto+を再起動しなくてもDATV側は正常に動作すること、ただし
+         // Langstoneは受信中に送信LO(altvoltage1)をpowerdownしたまま終了し、
+         // そのままではDATV送信の電波が出ないことを確認した。そこで送信LOだけを
+         // 元に戻してから切り替える(Shonan_Lite側main.pyも起動時に同じ復元を行う)。
+         PlutoTxEnable(1);
          iio_context_destroy(plutoctx);
-         // ★Shonan_Lite-pi5統合版パッチ:「GOTO SHONAN_LITE」ボタン押下処理。
-         // 以前はPi5自体をrebootしてブート時マーカーファイルで戻り先を
-         // 切り替える方式だったが、shonan-boot-menu.service導入に伴い
-         // shonan-gui.service/langstone.service/shonan-boot-menu.serviceが
-         // 互いにsystemdのConflicts=で排他制御されるようになったため、
-         // rebootせずsystemctl startで直接切り替えられる
-         // (Shonan_Lite-pi5側install.sh、pi5/scripts/install.sh 9/9参照)。
-         // ★Pluto+はTX/RX切替を繰り返した後、IIOコンテキストが詰まったような
-         // 状態(fmcomms2_source: Unable to refill buffer)になることがあり、
-         // その状態のままShonan_Lite側に戻るとRX/TXが正常動作しないことがある
-         // (実機で確認)。切替のたびに必ずPluto+側はrebootしてクリーンな
-         // 状態にする(Pi5自体のrebootは不要になったが、これは維持する)。
-         {
-           // ★元は char cmd[128] だったが、実際に生成される文字列は167文字あり
-           // "-o PubkeyAuth"の途中で切り詰められ、root@<IP> rebootが丸ごと
-           // 欠落してsshがエラー終了、Pluto+にreboot命令が届いていなかった
-           // (実機で確認、「戻る」時だけPluto+がrebootされない不具合の原因)。
-           char cmd[320];
-           snprintf(cmd, sizeof(cmd),
-             "sshpass -p analog ssh -o StrictHostKeyChecking=accept-new "
-             "-o ConnectTimeout=6 -o PreferredAuthentications=password "
-             "-o PubkeyAuthentication=no root@%s reboot", plutoip+3);
-           system(cmd);
-         }
+         // Shonan_Lite(main.py)とrun_plutoに「Langstoneからの切替」であることを
+         // 伝える印。Shonan_Liteは起動時のPluto+再起動を省き、run_plutoは
+         // GUI終了後のPluto+再起動を省く(/tmp配下なのでPi5の再起動で消える)。
+         system("touch /tmp/shonan_switch_from_langstone");
          // ★systemd(langstone.service)は$HOMEを自動設定しないため、絶対パスで
-         // マーカーファイルを削除する(念のため、ConditionPathExists対策として
-         // 維持。systemctl start自体は直接指定したユニットを起動するので
-         // 本来は無くても動くが、手動でsystemctl restartされた場合の保険)。
+         // マーカーファイルを削除する(ConditionPathExists対策)。
          system("rm -f /home/pi/.pi5_boot_mode_langstone");
          sync();
-         // ★Shonan_Lite-RasPI5へ切り替わるタイミングで12V電源をOFFにしておく
-         // (Shonan_Lite側main.pyが自身の起動時に改めてONを送るまでの間、
-         // Langstone終了直後にPAへ電源が入りっぱなしにならないようにする)。
-         notifyEspPower(0);
          // ★sudoers.d/shonan-pi5-rebootで許可済みのコマンド(shonan-boot-menu.py
          // が起動時に使うものと同一)。Conflicts=によりlangstone.service(この
          // プロセス自身)はsystemdが自動的に停止する。

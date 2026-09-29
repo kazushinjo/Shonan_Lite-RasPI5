@@ -293,9 +293,17 @@ DATV送受信アプリとは同時起動できないが、**`shonan-gui.service`
 - Langstone V3の設定メニュー内「BACK TO SHONAN_LITE」ボタン →
   Shonan_Lite Home画面に戻る
 
-**Plutoだけは切替のたびに必ずreboot**する。TX/RXを繰り返した後にIIOコンテキストが
-詰まったような状態(`fmcomms2_source: Unable to refill buffer`等)になることが
-あり、その状態のままアプリを切り替えると正常動作しないことがある(実機で確認)。
+切替時にPluto(とPA_Power/PTTコントローラの12V電源)は**再起動しない**
+(以前は切替のたびにPlutoを再起動しており、数十秒かかっていた)。実機試験で、
+DATV→Langstone→DATVとPlutoを再起動せずに切り替えても、Langstoneの送受信と
+DATVの送受信(オンデバイス復調による自局信号のロック)が正常に動くことを確認した。
+ただしLangstoneは受信中にPlutoの送信LO(`altvoltage1`)をpowerdownしたまま終了し、
+そのままではDATV送信の電波が出ないため、「GOTO SHONAN_LITE」で戻るときは
+Langstone側とShonan_Lite側の両方で送信LOを元に戻す。
+Langstoneからの切替であることは`/tmp/shonan_switch_from_langstone`で伝え、
+Shonan_Liteはこれがあるときだけ起動時のPluto再起動を省く(Pi5の電源投入時は
+従来どおり再起動する)。Plutoが`fmcomms2_source: Unable to refill buffer`のように
+詰まった場合は、Home画面の「アプリ再起動」(Plutoも再起動する)で復旧できる。
 
 内部的には`~/.pi5_boot_mode_langstone`マーカーファイルの有無をsystemdの
 `ConditionPathExists`で判定し、`shonan-gui.service`/`langstone.service`の

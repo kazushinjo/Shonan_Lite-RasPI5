@@ -58,6 +58,8 @@ _PLUTO_SSH_PASSWORD = "analog"
 # (Langstone側の「GOTO SHONAN_LITE」ボタンはこのファイルを削除する。
 # pi5/third_party/Langstone-V3/LangstoneGUI_Pluto.c参照)。
 _LANGSTONE_BOOT_MARKER = Path.home() / ".pi5_boot_mode_langstone"
+# Langstoneの「GOTO SHONAN_LITE」で戻ったときの印(main.py LANGSTONE_SWITCH_MARKER参照)。
+LANGSTONE_SWITCH_MARKER = Path("/tmp/shonan_switch_from_langstone")
 
 
 class PowerSymbolIcon(QtWidgets.QWidget):
@@ -725,18 +727,18 @@ class HomeScreen(QtWidgets.QWidget):
 
     def _on_langstone_clicked(self) -> None:
         try:
-            # ★以前はPi5自体もrebootしていたが、shonan-boot-menu.service導入後は
-            # shonan-gui.service/langstone.service/shonan-boot-menu.serviceが
+            # ★shonan-gui.service/langstone.service/shonan-boot-menu.serviceは
             # systemdのConflicts=で互いに排他制御されるため、systemctl startを
-            # 直接呼ぶだけで切り替わる(Pi5自体はrebootしない。呼び出すと現在
-            # 稼働中のこのプロセス自体はsystemdに自動停止される)。Pluto+側だけは
-            # 切替のたびに必ずreboot して、IIOコンテキストが詰まった状態のまま
-            # Langstone側のGNU Radioフローグラフが起動しない不具合(実機で確認)を
-            # 避ける。
-            try:
-                self._reboot_pluto(wait=True)
-            except subprocess.TimeoutExpired:
-                pass  # 届いていなくても切替は進める
+            # 直接呼ぶだけで切り替わる(呼び出すと現在稼働中のこのプロセス自体は
+            # systemdに自動停止される)。
+            # ★切替時間の短縮のため、以前のように切替のたびにPluto+を再起動しない
+            # (実機試験で、再起動しなくてもLangstoneの送受信は正常に動くことを
+            # 確認した)。代わりにDATVの送受信を止めてPlutoを空けてから切り替える。
+            self.main_window.tx_controller.stop()
+            self.main_window.rx_controller.stop()
+            # 前回Langstoneから戻ったときの印を消す(次にLangstoneを「GOTO
+            # SHONAN_LITE」以外で終了したときは、従来どおりPluto+を再起動させる)。
+            LANGSTONE_SWITCH_MARKER.unlink(missing_ok=True)
             # ★Langstone V3自身は12V電源(GPIO26)に触れないため、切替時に
             # ここで明示的にONを送っておく(Langstone側の送信でPA電源が
             # 入っていない、という事態を避ける)。
@@ -751,13 +753,7 @@ class HomeScreen(QtWidgets.QWidget):
         except OSError as exc:
             error_dialog(self, "Langstone起動失敗", str(exc))
 
-    def _reboot_pluto(self, wait: bool = False) -> None:
-        # ★アプリ切替時にPluto+を毎回rebootして必ずクリーンな状態にする。
-        # Pluto+はTX/RXを繰り返した後、IIOコンテキストが詰まったような状態
-        # (fmcomms2_source: Unable to refill buffer: Connection timed out)
-        # になることがあり、その状態のままLangstone側のGNU Radioフローグラフを
-        # 起動すると永久に「Restarting GNU Radio」を繰り返し動作しない
-        # (実機で確認・Pluto+ rebootで解消)。
+    def _reboot_pluto(self) -> None:
         pluto_uri = self.main_window.settings.pluto_uri
         prefix = "ip:"
         host = pluto_uri[len(prefix):] if pluto_uri.startswith(prefix) else pluto_uri
@@ -771,15 +767,7 @@ class HomeScreen(QtWidgets.QWidget):
             f"{_PLUTO_SSH_USER}@{host}",
             "reboot",
         ]
-        if wait:
-            # Langstone起動直後、Conflicts=によりこのshonan-gui.serviceプロセス
-            # 自体がsystemdに停止させられる(Pi5自体はrebootしない)。停止される
-            # 前にSSHコマンドの送信が完了する(=実際にPluto+へ届く)ことを保証する
-            # ためここで待つ。接続失敗時も(最大ConnectTimeout=6秒程度で)
-            # 戻ってきてから先へ進む。
-            subprocess.run(cmd, timeout=10)
-        else:
-            subprocess.Popen(cmd)
+        subprocess.Popen(cmd)
 
     def on_show(self) -> None:
         settings = self.main_window.settings

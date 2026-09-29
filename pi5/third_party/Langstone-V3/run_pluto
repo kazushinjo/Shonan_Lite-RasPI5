@@ -82,9 +82,14 @@ if !(ps -ax |grep -v grep| grep -q Lang_TRX_Pluto.py) then
 # Start the GUI (which will also start the GNURadio module
 
    $HOME/Langstone/GUI_Pluto > /tmp/LangstoneGUI_Pluto.log 2>&1
+   # ★Shonan_Lite-pi5統合版パッチ(切替時間の短縮): 「GOTO SHONAN_LITE」で
+   # Shonan_Liteへ切り替えた場合(GUI_Plutoが/tmp/shonan_switch_from_langstoneを
+   # 作る)は、Pluto+を再起動しない(Shonan_Liteがそのまま使うため)。
+   if [ ! -e /tmp/shonan_switch_from_langstone ]; then
    # Send a reboot command to Pluto after GUI Exits
    ssh-keygen -f "$HOME/.ssh/known_hosts" -R $PLUTO_IP >/dev/null 2>&1
    timeout 2 sshpass -p analog ssh -o StrictHostKeyChecking=no root@$PLUTO_IP 'PATH=/bin:/sbin:/usr/bin;reboot'  >/dev/null 2>&1
+   fi
 
 else
    echo Langstone is already running. Use ./stop first.

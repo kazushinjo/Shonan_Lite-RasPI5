@@ -48,6 +48,12 @@ SCREEN_ROUTES = [
     "testequipment", "presets",
 ]
 
+# Langstone V3の「GOTO SHONAN_LITE」で切り替えてきたときにLangstone側
+# (LangstoneGUI_Pluto.c)が作る印。あれば起動時のPluto+再起動を省く。
+# Home画面の「Langstone」ボタンで次にLangstoneへ切り替えるときに削除する
+# (screens/home.py)。/tmp配下なのでPi5の再起動で消え、電源投入時は必ず再起動する。
+LANGSTONE_SWITCH_MARKER = Path("/tmp/shonan_switch_from_langstone")
+
 
 class MainWindow(QtWidgets.QMainWindow):
     restart_finished = QtCore.pyqtSignal(bool, str)
@@ -339,6 +345,15 @@ class MainWindow(QtWidgets.QMainWindow):
             host = self.settings.pluto_host()
         except ValueError:
             host = ""
+        if host and LANGSTONE_SWITCH_MARKER.exists():
+            # ★Langstone V3からの切替ではPluto+を再起動しない(切替時間の短縮)。
+            # 実機試験で、再起動しなくてもDATVの送受信は正常に動くことを確認した。
+            # ただしLangstoneは送信LOをpowerdownしたまま終了することがあり、
+            # そのままではDATV送信の電波が出ないため、送信LOだけは必ず元に戻す
+            # (Langstone側も終了時に戻すが、念のためこちらでも行う)。
+            print("[pluto-startup] switched from Langstone; skipping Pluto reboot", flush=True)
+            threading.Thread(target=self._restore_pluto_tx_lo, daemon=True).start()
+            host = ""
         if not host:
             self._startup_restart_pending = False
             self.navigate_to("home")
@@ -346,6 +361,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rx_controller.run_iio_preflight(self.settings)
             return
         self._begin_pluto_restart("起動時Pluto再起動", "アプリ起動時にPlutoも再起動しています…")
+
+    def _restore_pluto_tx_lo(self) -> None:
+        """Plutoの送信LO(altvoltage1)のpowerdownを解除する。"""
+        try:
+            result = subprocess.run(
+                ["iio_attr", "-u", self.settings.pluto_uri, "-c", "ad9361-phy",
+                 "altvoltage1", "powerdown", "0"],
+                capture_output=True, text=True, timeout=10)
+            print(f"[pluto-startup] TX LO powerdown cleared rc={result.returncode}", flush=True)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            print(f"[pluto-startup] TX LO restore failed: {exc}", flush=True)
 
     def _begin_pluto_restart(self, title: str, message_text: str) -> None:
         if self._app_restarting:
