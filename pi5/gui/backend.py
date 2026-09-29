@@ -876,6 +876,11 @@ class RxController(QtCore.QObject):
         self._watchdog_timer = QtCore.QTimer(self)
         self._watchdog_timer.setInterval(WATCHDOG_INTERVAL_MS)
         self._watchdog_timer.timeout.connect(self._check_watchdog)
+        # プロセス終了後の自動再起動の予約。stop()で取り消せるようQTimerで持つ。
+        self._restart_timer = QtCore.QTimer(self)
+        self._restart_timer.setSingleShot(True)
+        self._restart_timer.setInterval(500)
+        self._restart_timer.timeout.connect(self._restart_after_exit)
 
     def run_iio_preflight(self, settings: AppSettings, *, notify_error: bool = True) -> bool:
         """短いDMA読出しでPluto RX/IIOの健全性を確認する。"""
@@ -1051,6 +1056,10 @@ class RxController(QtCore.QObject):
         print("[rx] stop() called (user pressed Stop, or main.py shutdown)", flush=True)
         self._settings = None
         self._restart_pending = False
+        # ★プロセス終了直後に予約された自動再起動を取り消す。取り消さないと、
+        # 予約から0.5秒以内にstop()が呼ばれた場合(機器試験のRX確認終了時に実機で
+        # 発生)、予約が後から実行されてRXが再開し、以後止まらなくなっていた。
+        self._restart_timer.stop()
         self._watchdog_timer.stop()
         self._stop_process()
 
@@ -1130,9 +1139,13 @@ class RxController(QtCore.QObject):
         self._restart_pending = False
         if self._settings is not None:
             print("[rx] process ended unexpectedly (or watchdog stopped it), restarting", flush=True)
-            settings = self._settings
-            QtCore.QTimer.singleShot(500, lambda: self.start(settings))
+            self._restart_timer.start()
         else:
             print("[rx] stop() was called, not restarting", flush=True)
             self._watchdog_timer.stop()
             self.stopped.emit()
+
+    def _restart_after_exit(self) -> None:
+        # 予約後にstop()されていれば_settingsはNoneなので再起動しない。
+        if self._settings is not None and not self.is_running():
+            self.start(self._settings)
