@@ -148,6 +148,10 @@ float bandSmeterZero[numband]={-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,-
 int bandSSBFiltLow[numband]={300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300};
 int bandSSBFiltHigh[numband]={3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000};
 int bandFFTBW[numband]={0};
+// ★Shonan_Lite-pi5統合版パッチ: 受信専用バンド(1のバンドでは送信しない)。
+// Shonan_LiteのHome画面の衛星をタップしたときに開く10GHz受信用バンド
+// (LNB等で周波数変換して受信する)で使う。設定ファイルのbandRxOnlyNNで持つ。
+int bandRxOnly[numband]={0};
 
 #define minFreq 0.0
 #define maxFreq 99999.99999
@@ -1436,6 +1440,7 @@ void notifyEspPtt(int state)
 {
   char cmd[160];
   if(pttControllerHost[0]=='\0') return;
+  if(state && bandRxOnly[band]) return;   // 受信専用バンドではPA/リレーを送信に切り替えない
   snprintf(cmd,sizeof(cmd),
     "curl -s -m 1 \"http://%s/tx?state=%s\" >/dev/null 2>&1 &",
     pttControllerHost, state ? "on" : "off");
@@ -2296,6 +2301,12 @@ void setBand(int b)
 
 void setPtts(int p)
 {
+ // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドでは画面のPTTを受け付けない。
+ if((p==1) && bandRxOnly[band])
+ {
+  displayError("RX ONLY BAND");
+  return;
+ }
  // ★Shonan_Lite-pi5統合版パッチ: 画面上のソフトウェアPTTボタンも、ハードウェア
  // PTTスイッチ(processGPIO側)と同様にESP32 PTTコントローラへ中継する。
  notifyEspPtt(p);
@@ -2335,6 +2346,12 @@ void setPtts(int p)
 
 void setBeacon(int b)
 {
+ // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドではビーコンを送信しない。
+ if((b > 0) && bandRxOnly[band])
+   {
+    displayError("RX ONLY BAND");
+    return;
+   }
  if(b > 0)
    {
       sendBeacon=b;
@@ -2683,6 +2700,9 @@ void setTxPin(int v)
 
 void setTx(int pt)
 {
+  // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドでは送信しない。ハードウェアPTT・
+  // CWキー・ビーコン・起動直後の初期化を含め、送信はすべてここを通る。
+  if((pt==1) && bandRxOnly[band]) return;
   if((pt==1)&&(transmitting==0))
     {
     if(firstpass == 0)                                      //don't set the Output pins if we are still initialising
@@ -3986,6 +4006,8 @@ while(fscanf(conffile,"%49s %99s [^\n]\n",variable,value) !=EOF)
     if(strstr(variable,vname)) sscanf(value,"%d",&bandSSBFiltHigh[b]); 
     sprintf(vname,"bandFFTBW%02d",b);
     if(strstr(variable,vname)) sscanf(value,"%d",&bandFFTBW[b]);    
+    sprintf(vname,"bandRxOnly%02d",b);
+    if(strstr(variable,vname)) sscanf(value,"%d",&bandRxOnly[b]);
     }
 
     
@@ -4063,6 +4085,7 @@ for(int b=0;b<numband;b++)
   fprintf(conffile,"bandSSBFiltLow%02d %d\n",b,bandSSBFiltLow[b]);
   fprintf(conffile,"bandSSBFiltHigh%02d %d\n",b,bandSSBFiltHigh[b]);
   fprintf(conffile,"bandFFTBW%02d %d\n",b,bandFFTBW[b]);    
+  fprintf(conffile,"bandRxOnly%02d %d\n",b,bandRxOnly[b]);
 }
 
 fprintf(conffile,"currentBand %d\n",band);

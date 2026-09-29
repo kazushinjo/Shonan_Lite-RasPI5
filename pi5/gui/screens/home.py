@@ -8,6 +8,7 @@ from pathlib import Path
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import langstone_config
 from backend import PTT_CHANNEL_POWER, _send_ptt_channel_state
 from version import __version__
 from widgets import NavButton, error_dialog
@@ -556,6 +557,18 @@ class HomeScreen(QtWidgets.QWidget):
             self._connect_home_action(btn, route)
             self._buttons[route] = btn
             btn._mock_rect = rect
+        # 背景画像の右側の衛星をタップすると、Langstoneを10GHz受信用のバンド
+        # (受信専用、langstone_config.py参照)で開く。カードとは重ならない位置。
+        satellite_btn = QtWidgets.QPushButton(canvas)
+        satellite_btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        satellite_btn.setToolTip("10GHz受信 (Langstone) / 10GHz RX (Langstone)")
+        satellite_btn.setStyleSheet(
+            "QPushButton { background: transparent; border: none; }"
+            "QPushButton:pressed { background: rgba(50, 110, 220, 45); border: 2px solid #4d8dff; }"
+        )
+        satellite_btn.clicked.connect(self._on_satellite_clicked)
+        satellite_btn._mock_rect = (1395, 420, 175, 160)
+        self._buttons["satellite"] = satellite_btn
         outer.addWidget(canvas, 1)
         self._position_mock_home()
         return True
@@ -727,6 +740,23 @@ class HomeScreen(QtWidgets.QWidget):
         self.main_window.restart_app()
 
     def _on_langstone_clicked(self) -> None:
+        # 衛星から10GHz受信用バンドで開いたままなら、その前のバンドに戻して開く。
+        try:
+            langstone_config.restore_previous_band()
+        except OSError as exc:
+            print(f"[langstone] 前のバンドへ戻せませんでした: {exc}", flush=True)
+        self._switch_to_langstone()
+
+    def _on_satellite_clicked(self) -> None:
+        # Langstoneを10GHz受信用バンド(表示10236.5MHz、Pluto受信486.5MHz、受信専用)で開く。
+        try:
+            langstone_config.select_satellite_band()
+        except OSError as exc:
+            error_dialog(self, "Langstone設定失敗", str(exc))
+            return
+        self._switch_to_langstone()
+
+    def _switch_to_langstone(self) -> None:
         try:
             # ★shonan-gui.service/langstone.service/shonan-boot-menu.serviceは
             # systemdのConflicts=で互いに排他制御されるため、systemctl startを
