@@ -301,8 +301,9 @@ DATVの送受信(オンデバイス復調による自局信号のロック)が�
 そのままではDATV送信の電波が出ないため、「GOTO SHONAN_LITE」で戻るときは
 Langstone側とShonan_Lite側の両方で送信LOを元に戻す。
 Langstoneからの切替であることは`/tmp/shonan_switch_from_langstone`で伝え、
-Shonan_Liteはこれがあるときだけ起動時のPluto再起動を省く(Pi5の電源投入時は
-従来どおり再起動する)。Plutoが`fmcomms2_source: Unable to refill buffer`のように
+Shonan_Liteはこれがあるときだけ起動時のPluto再起動を省く(使ったら消すので、
+その後のアプリ再起動やPi5の電源投入時は従来どおり再起動する)。Langstone側の
+`run_pluto`は`/tmp/langstone_goto_shonan`があるとき、終了後のPluto再起動を省く。Plutoが`fmcomms2_source: Unable to refill buffer`のように
 詰まった場合は、Home画面の「アプリ再起動」(Plutoも再起動する)で復旧できる。
 
 内部的には`~/.pi5_boot_mode_langstone`マーカーファイルの有無をsystemdの

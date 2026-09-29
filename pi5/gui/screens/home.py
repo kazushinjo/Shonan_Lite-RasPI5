@@ -58,8 +58,9 @@ _PLUTO_SSH_PASSWORD = "analog"
 # (Langstone側の「GOTO SHONAN_LITE」ボタンはこのファイルを削除する。
 # pi5/third_party/Langstone-V3/LangstoneGUI_Pluto.c参照)。
 _LANGSTONE_BOOT_MARKER = Path.home() / ".pi5_boot_mode_langstone"
-# Langstoneの「GOTO SHONAN_LITE」で戻ったときの印(main.py LANGSTONE_SWITCH_MARKER参照)。
-LANGSTONE_SWITCH_MARKER = Path("/tmp/shonan_switch_from_langstone")
+# Langstoneの「GOTO SHONAN_LITE」で戻ったときにLangstoneのrun_plutoが見る印
+# (あればGUI終了後のPluto+再起動を省く。LangstoneGUI_Pluto.c参照)。
+LANGSTONE_GOTO_SHONAN_MARKER = Path("/tmp/langstone_goto_shonan")
 
 
 class PowerSymbolIcon(QtWidgets.QWidget):
@@ -738,7 +739,7 @@ class HomeScreen(QtWidgets.QWidget):
             self.main_window.rx_controller.stop()
             # 前回Langstoneから戻ったときの印を消す(次にLangstoneを「GOTO
             # SHONAN_LITE」以外で終了したときは、従来どおりPluto+を再起動させる)。
-            LANGSTONE_SWITCH_MARKER.unlink(missing_ok=True)
+            LANGSTONE_GOTO_SHONAN_MARKER.unlink(missing_ok=True)
             # ★Langstone V3自身は12V電源(GPIO26)に触れないため、切替時に
             # ここで明示的にONを送っておく(Langstone側の送信でPA電源が
             # 入っていない、という事態を避ける)。

@@ -49,9 +49,9 @@ SCREEN_ROUTES = [
 ]
 
 # Langstone V3の「GOTO SHONAN_LITE」で切り替えてきたときにLangstone側
-# (LangstoneGUI_Pluto.c)が作る印。あれば起動時のPluto+再起動を省く。
-# Home画面の「Langstone」ボタンで次にLangstoneへ切り替えるときに削除する
-# (screens/home.py)。/tmp配下なのでPi5の再起動で消え、電源投入時は必ず再起動する。
+# (LangstoneGUI_Pluto.c)が作る印。あれば起動時のPluto+再起動を省き、使ったら消す
+# (その後のアプリ再起動では従来どおりPluto+を再起動する)。/tmp配下なので
+# Pi5の再起動でも消え、電源投入時は必ず再起動する。
 LANGSTONE_SWITCH_MARKER = Path("/tmp/shonan_switch_from_langstone")
 
 
@@ -352,6 +352,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # そのままではDATV送信の電波が出ないため、送信LOだけは必ず元に戻す
             # (Langstone側も終了時に戻すが、念のためこちらでも行う)。
             print("[pluto-startup] switched from Langstone; skipping Pluto reboot", flush=True)
+            LANGSTONE_SWITCH_MARKER.unlink(missing_ok=True)
             threading.Thread(target=self._restore_pluto_tx_lo, daemon=True).start()
             host = ""
         if not host:

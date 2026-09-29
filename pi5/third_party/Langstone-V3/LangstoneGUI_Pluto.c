@@ -2120,10 +2120,12 @@ if(buttonTouched(funcButtonsX+buttonSpaceX*5,funcButtonsY))    //Button 6 = BEAC
          // 元に戻してから切り替える(Shonan_Lite側main.pyも起動時に同じ復元を行う)。
          PlutoTxEnable(1);
          iio_context_destroy(plutoctx);
-         // Shonan_Lite(main.py)とrun_plutoに「Langstoneからの切替」であることを
-         // 伝える印。Shonan_Liteは起動時のPluto+再起動を省き、run_plutoは
-         // GUI終了後のPluto+再起動を省く(/tmp配下なのでPi5の再起動で消える)。
-         system("touch /tmp/shonan_switch_from_langstone");
+         // 「Langstoneからの切替」であることを伝える印(/tmp配下なのでPi5の再起動で
+         // 消える)。shonan_switch_from_langstoneはShonan_Lite(main.py)用で、あれば
+         // 起動時のPluto+再起動を省く(使ったらShonan_Liteが消す)。
+         // langstone_goto_shonanはrun_pluto用で、あればGUI終了後のPluto+再起動を
+         // 省く(次にLangstoneを起動するときにShonan_Liteのhome.pyが消す)。
+         system("touch /tmp/shonan_switch_from_langstone /tmp/langstone_goto_shonan");
          // ★systemd(langstone.service)は$HOMEを自動設定しないため、絶対パスで
          // マーカーファイルを削除する(ConditionPathExists対策)。
          system("rm -f /home/pi/.pi5_boot_mode_langstone");
