@@ -1674,6 +1674,14 @@ gotoXY(funcButtonsX,funcButtonsY);
     displayButton("BEACON");
     }
 
+  // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドではPTTボタンを灰色の
+  // 「RX ONLY」表示にする(押しても送信しない。setTx/setPtts参照)。
+  if(bandRxOnly[band])
+    {
+    setForeColour(128,128,128);
+    displayButton2x12("RX","ONLY");
+    return;
+    }
   if(ptt|ptts)
     {
     setForeColour(255,0,0);  
@@ -2301,12 +2309,9 @@ void setBand(int b)
 
 void setPtts(int p)
 {
- // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドでは画面のPTTを受け付けない。
- if((p==1) && bandRxOnly[band])
- {
-  displayError("RX ONLY BAND");
-  return;
- }
+ // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドでは画面のPTTを受け付けない
+ // (PTTボタンは「RX ONLY」表示。displayMenu参照)。
+ if((p==1) && bandRxOnly[band]) return;
  // ★Shonan_Lite-pi5統合版パッチ: 画面上のソフトウェアPTTボタンも、ハードウェア
  // PTTスイッチ(processGPIO側)と同様にESP32 PTTコントローラへ中継する。
  notifyEspPtt(p);
@@ -2347,11 +2352,7 @@ void setPtts(int p)
 void setBeacon(int b)
 {
  // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドではビーコンを送信しない。
- if((b > 0) && bandRxOnly[band])
-   {
-    displayError("RX ONLY BAND");
-    return;
-   }
+ if((b > 0) && bandRxOnly[band]) return;
  if(b > 0)
    {
       sendBeacon=b;
@@ -2702,7 +2703,14 @@ void setTx(int pt)
 {
   // ★Shonan_Lite-pi5統合版パッチ: 受信専用バンドでは送信しない。ハードウェアPTT・
   // CWキー・ビーコン・起動直後の初期化を含め、送信はすべてここを通る。
-  if((pt==1) && bandRxOnly[band]) return;
+  // 起動直後の初期化(setTx(1)→setTx(0))の受信側で行われる送信LOの停止も
+  // 行われなくなるため、ここで送信LOを止めておく(止めないと、Shonan_Liteから
+  // 戻ったときに有効にした送信LOがそのまま残り、漏れ電波が出るおそれがある)。
+  if((pt==1) && bandRxOnly[band])
+    {
+      PlutoTxEnable(0);
+      return;
+    }
   if((pt==1)&&(transmitting==0))
     {
     if(firstpass == 0)                                      //don't set the Output pins if we are still initialising
