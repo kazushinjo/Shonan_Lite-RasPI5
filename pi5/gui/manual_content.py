@@ -50,6 +50,7 @@ MANUAL_SECTIONS = [
         ("表示言語", "画面の表示言語を「日本語」「English」から選びます。選ぶとすぐに全画面の表示が切り替わり、設定は保存されます。"),
         ("送信先（Pluto Tx）", "PlutoのIPアドレスを入力します。UDP-TSポートは8282固定(Pluto側)です。"),
         ("PA_Power/PTTコントローラ（ESP32）", "PA_Power/PTTコントローラ(ESP32+W5500、hardware/W5500_PA_PTT_Control)を使用するかどうかを「ESP32 W5500を使用する」で選び、IPアドレスを入力します。OFFまたは空欄なら連携しません(OFFにしてもIPアドレスは保持されます)。使用する場合、送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源(Pluto+含む)を自動でON/OFFします。ホーム画面の「Pluto電源」カード(オプション機能)から手動での電源サイクル(OFF→3秒待機→ON)も行えます。"),
+        ("ESP32 W5500なしでのPA/LNA制御", "ESP32 W5500(PA_Power/PTTコントローラ)を使わなくても、RasPI5からのPTT ON信号でPA・LNAの送受信切替を制御できます。送信中はPi 5のGPIO21(40番ピン、GNDは39番ピン)がHIGH(3.3V)、受信中はLOWになります。Shonan_Liteの送信とLangstone V3の送信(Langstone標準のTx Output)のどちらでも同じピンに出力されます。GPIO21は3.3Vロジックで電流を取れないため、トランジスタやリレードライバ等でバッファしてからPA・LNA(同軸リレー等)を駆動してください。12V電源のON/OFFとホーム画面の「Pluto電源」カードはESP32 W5500が必要です。"),
         ("オンデバイス復調",
          "オンデバイス復調は開発時の動作確認用の機能です。ONにする操作をすると、まず確認ポップアップが表示されます。"
          "PlutoのTX端子とRX端子の間に40 dB以上の外部アッテネータが入っていない状態で送信するとPlutoを破損する恐れがある"
@@ -180,6 +181,7 @@ MANUAL_SECTIONS_EN = [
         ("Display Language", "Choose the display language from \"日本語\" (Japanese) and \"English\". All screens switch immediately and the choice is saved."),
         ("Destination (Pluto Tx)", "Enter the Pluto's IP address. The UDP-TS port is fixed at 8282 (on the Pluto side)."),
         ("PA_Power/PTT Controller (ESP32)", "Choose whether to use the PA_Power/PTT controller (ESP32 + W5500, hardware/W5500_PA_PTT_Control) with \"Use ESP32 W5500\", and enter its IP address. The link is disabled when it is OFF or the address is empty (the IP address is kept even when OFF). When used, PTT follows TX start/stop and the 12 V power (including the Pluto+) is switched ON/OFF automatically at app start/exit. A manual power cycle (OFF → wait 3 seconds → ON) is also available from the \"Pluto Power\" card (optional feature) on the Home screen."),
+        ("PA/LNA control without ESP32 W5500", "Even without the ESP32 W5500 (PA_Power/PTT controller), the PA and LNA can be switched between TX and RX by the PTT ON signal from the RasPI5. GPIO21 on the Pi 5 (pin 40; GND on pin 39) is HIGH (3.3 V) while transmitting and LOW while receiving. The same pin is driven both when transmitting with Shonan_Lite and when transmitting with Langstone V3 (Langstone's standard Tx Output). GPIO21 is a 3.3 V logic output that cannot supply current, so buffer it with a transistor, relay driver or similar before driving the PA and LNA (coax relays, etc.). Switching the 12 V power ON/OFF and the \"Pluto Power\" card on the Home screen still require the ESP32 W5500."),
         ("On-device Demodulation",
          "On-device demodulation is a feature for development testing. Turning it ON first shows a "
          "confirmation popup. It states in red that transmitting without a 40 dB or greater external "

@@ -489,6 +489,25 @@ def _send_ptt_request(host: str, state: str) -> None:
     urllib.request.urlopen(url, timeout=1.5).close()
 
 
+# Pi5本体のTX出力GPIO。Langstone V3のTx Output(GPIO21=物理40番ピン、送信中HIGH)と
+# 同じピンに揃え、ESP32+W5500(PA_Power/PTTコントローラ)なしでもPA/LNA切替用の
+# PTT ON信号を取り出せるようにする。
+PI5_TX_GPIO = 21
+
+
+def _set_pi5_tx_gpio(on: bool) -> None:
+    """Pi5本体のTX出力GPIO(PI5_TX_GPIO)をHIGH(送信中)/LOW(受信)にする。
+
+    ★lgpio等でラインをclaimするとLangstone V3(lgGpioClaimOutput)と取り合いになる
+    ため、ラインを保持しない`pinctrl set`で直接書き込む。Pi以外の環境などで
+    pinctrlが無い・失敗した場合は例外をそのまま送出する(呼び出し側でログのみ)。
+    """
+    subprocess.run(
+        ["pinctrl", "set", str(PI5_TX_GPIO), "op", "dh" if on else "dl"],
+        check=True, timeout=2, capture_output=True,
+    )
+
+
 # ESP32ファームウェア(hardware/W5500_PA_PTT_Control.ino)のPIN_OUTインデックスに対応。
 PTT_CHANNEL_POWER = 0  # GPIO26: 12V電源(2SJ334ハイサイドスイッチ)
 PTT_CHANNEL_PTT = 1    # GPIO27: PTT
@@ -663,6 +682,10 @@ class TxController(QtCore.QObject):
                 self.error.emit(f"Pluto設定送信に失敗しました: {exc}")
                 return
             output_url = _build_udp_ts_url(settings)
+        try:
+            _set_pi5_tx_gpio(True)
+        except (OSError, subprocess.SubprocessError) as exc:
+            self.log_line.emit(f"[PTT] Pi5 GPIO{PI5_TX_GPIO}のHIGH出力に失敗しました: {exc}")
         if settings.active_ptt_controller_host():
             try:
                 _send_ptt_request(settings.active_ptt_controller_host(), "on")
@@ -689,6 +712,13 @@ class TxController(QtCore.QObject):
     def stop(self) -> None:
         was_running = self.is_running()
         self._should_be_running = False
+        # ★Pi5 GPIOはESP32通知と違いローカルで軽いため、起動途中で失敗した場合も
+        # HIGHのまま残さないよう、送信中かどうかにかかわらずLOWへ戻す。
+        try:
+            _set_pi5_tx_gpio(False)
+        except (OSError, subprocess.SubprocessError) as exc:
+            if was_running:
+                self.log_line.emit(f"[PTT] Pi5 GPIO{PI5_TX_GPIO}のLOW出力に失敗しました: {exc}")
         if was_running and self._last_settings and self._last_settings.active_ptt_controller_host():
             try:
                 _send_ptt_request(self._last_settings.active_ptt_controller_host(), "off")

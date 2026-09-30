@@ -32,8 +32,8 @@ from PyQt5 import QtCore, QtNetwork, QtQuickWidgets, QtWidgets
 
 import settings_store
 from backend import (
-    PTT_CHANNEL_POWER, RxController, TxController, _push_pluto_settings,
-    _send_ptt_channel_state,
+    PI5_TX_GPIO, PTT_CHANNEL_POWER, RxController, TxController, _push_pluto_settings,
+    _send_ptt_channel_state, _set_pi5_tx_gpio,
 )
 from i18n import set_language
 
@@ -72,6 +72,12 @@ class MainWindow(QtWidgets.QMainWindow):
         settings_store.save(self.settings)
         self.tx_controller = TxController(self)
         self.rx_controller = RxController(self)
+        # 前回異常終了でPi5のTX出力GPIOがHIGHのまま残っていてもPA/LNAが送信側に
+        # 切り替わったままにならないよう、起動時にLOW(受信)へ戻しておく。
+        try:
+            _set_pi5_tx_gpio(False)
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"[PTT] Pi5 GPIO{PI5_TX_GPIO}の初期化(LOW)に失敗しました: {exc}", flush=True)
 
         self.stack = QtWidgets.QStackedWidget()
         self.setCentralWidget(self.stack)

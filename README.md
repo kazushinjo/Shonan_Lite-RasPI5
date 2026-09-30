@@ -612,6 +612,38 @@ The settings assume the frequency is down-converted at the antenna by an **LNB (
 - Power for the LNB (bias-T over the coax, 12–18 V) is not handled by Shonan_Lite/Langstone.
   Provide it separately.
 
+## PA/LNAの送受信切替(ESP32 W5500なしでも可) / PA/LNA TX/RX switching (possible without ESP32 W5500)
+
+ESP32 W5500(PA_Power/PTTコントローラ、[`hardware/W5500_PA_PTT_Control`](hardware/W5500_PA_PTT_Control))は
+使わなくても、RasPI5からのPTT ON信号でPA・LNAの送受信切替を制御できる。
+
+| 項目<br>Item | 内容<br>Details |
+| --- | --- |
+| 出力ピン<br>Output pin | Pi 5 GPIO21(40番ピン)、GNDは39番ピン<br>Pi 5 GPIO21 (pin 40), GND on pin 39 |
+| 論理<br>Logic | 送信中HIGH(3.3 V)、受信中LOW<br>HIGH (3.3 V) while transmitting, LOW while receiving |
+| 対象<br>Applies to | Shonan_Liteの送信・Langstone V3の送信(Langstone標準のTx Output)のどちらも同じピン<br>Both Shonan_Lite TX and Langstone V3 TX (Langstone's standard Tx Output) use the same pin |
+
+- GPIO21は3.3 Vロジックで電流を取れないため、トランジスタやリレードライバ等でバッファしてから
+  PA・LNA(同軸リレー等)を駆動すること。
+- Shonan_Liteは送信開始時(映像送出の前)にHIGH、送信停止時とアプリ起動時にLOWにする
+  ([`pi5/gui/backend.py`](pi5/gui/backend.py)の`_set_pi5_tx_gpio()`)。Langstone V3はHIGHにしてから
+  100 ms後に送信を始める。
+- ESP32 W5500を併用する場合は、ESP32のPTT出力(J6)も従来どおり同時に切り替わる。
+  12 V電源のON/OFFとホーム画面の「Pluto電源」カードはESP32 W5500が必要。
+
+<!-- English -->
+
+The PA and LNA can be switched between TX and RX by the PTT ON signal from the RasPI5, even without the
+ESP32 W5500 (PA_Power/PTT controller, [`hardware/W5500_PA_PTT_Control`](hardware/W5500_PA_PTT_Control)).
+
+- GPIO21 is a 3.3 V logic output that cannot supply current. Buffer it with a transistor, relay driver or
+  similar before driving the PA and LNA (coax relays, etc.).
+- Shonan_Lite sets it HIGH when TX starts (before the video is sent) and LOW when TX stops and at app startup
+  (`_set_pi5_tx_gpio()` in [`pi5/gui/backend.py`](pi5/gui/backend.py)). Langstone V3 starts transmitting
+  100 ms after setting it HIGH.
+- When the ESP32 W5500 is also used, its PTT output (J6) switches at the same time as before.
+  Switching the 12 V power ON/OFF and the "Pluto Power" card on the Home screen still require the ESP32 W5500.
+
 ## 関連ドキュメント / Related documents
 
 - [`pi5/docs/install_script_guide.md`](pi5/docs/install_script_guide.md) — install.shの詳細ガイド / Detailed guide to install.sh
