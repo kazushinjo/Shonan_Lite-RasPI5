@@ -751,11 +751,30 @@ ESP32 W5500 (PA_Power/PTT controller, [`hardware/W5500_PA_PTT_Control`](hardware
 - [`hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md`](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md) — ESP32・W5500の接続一覧 / Connection list of the ESP32 and W5500(日英併記 / Japanese and English)
 - [`pi5/third_party/rpi-dvbs2-receiver-gui/`](pi5/third_party/rpi-dvbs2-receiver-gui/) — GNU Radio/gr-dvbs2rx受信フローグラフの参考実装(kazushinjo/rpi-dvbs2-receiver-guiより取り込み) / Reference implementation of the GNU Radio/gr-dvbs2rx receive flowgraph (imported from kazushinjo/rpi-dvbs2-receiver-gui)
 
+## 免責事項 / Disclaimer
+
+1. **無保証・自己責任 / No warranty; use at your own risk**  
+   本ソフトウェアは現状のまま(AS IS)で提供され、動作、品質、特定の目的への適合性を含め、いかなる保証もありません。本ソフトウェアの使用または使用できないことによって生じた、機器の破損、データの消失、電波障害、その他一切の損害について、開発者は責任を負いません。ご自身の責任においてご利用ください。  
+   This software is provided "AS IS" without warranty of any kind, including any warranty of operation, quality or fitness for a particular purpose. The developers accept no liability for any damage arising from the use of, or inability to use, this software, including damage to equipment, loss of data and radio interference. Use it at your own risk.
+2. **免許と法令の順守 / Licensing and compliance with the law**  
+   本ソフトウェアは、アマチュア無線のDATV(デジタルATV)実験のための送受信ソフトウェアです。電波を送信するには、運用する国・地域の法令に基づく免許が必要です(日本国内ではアマチュア局の免許)。周波数、空中線電力、電波の型式、運用できる範囲などの法令(日本国内では電波法および関係規則)を守ってください。免許のない送信や、免許の範囲を超えた送信は、法令違反となることがあります。本ソフトウェアは、設定された周波数・出力・変調方式が法令に適合していることを確認も保証もしません。送信の内容と結果は、すべて使用者の責任です。  
+   This software is for amateur-radio DATV (digital ATV) experiments. Transmitting requires a license under the laws of the country or region where you operate (in Japan, an amateur station license). Observe the applicable laws on frequency, transmitter power, emission type and permitted operation (in Japan, the Radio Act and related regulations). Transmitting without a license, or beyond the scope of your license, may violate the law. This software neither checks nor guarantees that the configured frequency, power and modulation comply with the law. You are solely responsible for what you transmit and for the results.
+3. **機器の取り扱い / Handling of equipment**  
+   PlutoのTXとRXの接続、外部アンプ(PA)・アッテネータ・アンテナの接続、送信出力の設定、GPIO21やPA_Power/PTTコントローラ(ESP32 W5500)の12 V電源・PTTの配線を誤ると、機器を破損したり、他の無線局へ障害を与えたりするおそれがあります。機器の仕様を確認し、使用者の責任で行ってください。特に、TXをRXへ直接接続せず、40 dB以上の減衰器を介してください。  
+   Wrong connections between the Pluto's TX and RX, wrong external amplifier (PA), attenuator or antenna connections, wrong transmit power settings, or wrong wiring of GPIO21 or of the 12 V power/PTT of the PA_Power/PTT controller (ESP32 W5500) may damage equipment or interfere with other stations. Check the specifications of your equipment and do this at your own responsibility. In particular, never connect TX directly to RX; use an attenuator of 40 dB or more.
+4. **第三者ソフトウェアとライセンス / Third-party software and license**  
+   本ソフトウェアは、GNU Radio、gr-dvbs2rx、libiio、FFmpeg、Qt(PyQt5・Qt Virtual Keyboard)、Langstone V3などの第三者ソフトウェアを利用・同梱します。それぞれのライセンスに従います。本ソフトウェア自体は GNU General Public License v3.0(GPLv3)の下で提供されます(下記「License」参照)。  
+   This software uses and bundles third-party software such as GNU Radio, gr-dvbs2rx, libiio, FFmpeg, Qt (PyQt5, Qt Virtual Keyboard) and Langstone V3, each under its own license. This software itself is provided under the GNU General Public License v3.0 (GPLv3); see "License" below.
+5. **動作について / About behavior**  
+   ご使用のRaspberry Pi・環境によって動作が異なる場合や、未発見の不具合が含まれる可能性があります。  
+   Behavior may differ depending on your Raspberry Pi and environment, and undiscovered defects may remain.
+
 ## クレジット / Credits
 
 - 受信部の方式考案・受信部原システム設計: 山崎慎慈氏(JE1BTA)
   rpi-dvbs2-receiver-guiの設計に基づきます
 - 受信部安定化調査修正・再捕捉修正・本アプリ開発: 真城和一
+- 本アプリは、Dave Crump氏(G8GKQ)が開発したDATV送受信機プロジェクト「Portsdown」に啓発され、開発したものです。同氏の先駆的な取り組みに感謝いたします。
 - Langstone V3(SDRトランシーバー): [g4eml/Langstone-V3](https://github.com/g4eml/Langstone-V3)
   (オリジナルから一部変更しています。差分は
   [`pi5/docs/patches/langstone_v3_shonan_lite.patch`](pi5/docs/patches/langstone_v3_shonan_lite.patch)を参照)
@@ -765,6 +784,7 @@ ESP32 W5500 (PA_Power/PTT controller, [`hardware/W5500_PA_PTT_Control`](hardware
 - Reception method and original reception system design: Shinji Yamazaki (JE1BTA),
   based on the design of rpi-dvbs2-receiver-gui
 - Reception stability investigation and fixes, re-acquisition fixes, and development of this app: Kazuichi Shinjo
+- This application was developed inspired by "Portsdown", the DATV transceiver project created by Dave Crump (G8GKQ). We extend our deep gratitude for his pioneering work.
 - Langstone V3 (SDR transceiver): [g4eml/Langstone-V3](https://github.com/g4eml/Langstone-V3)
   (partially modified from the original; see
   [`pi5/docs/patches/langstone_v3_shonan_lite.patch`](pi5/docs/patches/langstone_v3_shonan_lite.patch) for the diff)
