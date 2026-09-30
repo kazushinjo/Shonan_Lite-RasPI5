@@ -39,3 +39,6 @@ pi5/tests/__pycache__/
 **/.history/
 **/*-backups/
 **/~*.lck
+
+# KiCadの画面の状態(レイヤーの表示・拡大率など)。設計データではないので管理しない
+*.kicad_prl
