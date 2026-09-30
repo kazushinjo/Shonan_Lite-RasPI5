@@ -117,6 +117,7 @@ MANUAL_SECTIONS = [
     ("13. Plutoファームウェア", [
         ("使用ファームウェア", "Pluto無印でF5OEO製DATVカスタムファームウェア datvplutofrm v0.32-dirtyを使用します。送信はPluto内蔵のDVB-S2変調デーモンpluto_dvbを使用します。"),
         ("ファームウェア確認時の注意", "ファームウェアを変更した場合は、pluto_dvb、UDP TS受信経路、周波数、変調方式、FEC、ロールオフ、フレーム長、パイロット設定の互換性を確認してからRF試験を行います。"),
+        ("Plutoのユーザー名・パスワード", "Plutoのユーザー名(root)とパスワード(analog)は工場出荷時のデフォルト値のまま変更しないでください。本アプリとLangstone V3は、Plutoの再起動(アプリ起動時・アプリ再起動・機器試験・Langstone終了時)と設定の読み出しに、このデフォルト値でSSH接続しています。変更するとPlutoを再起動できなくなります。"),
     ]),
 ]
 
@@ -244,5 +245,6 @@ MANUAL_SECTIONS_EN = [
     ("13. Pluto Firmware", [
         ("Firmware used", "Uses F5OEO's custom DATV firmware datvplutofrm v0.32-dirty on a plain Pluto. Transmission uses the Pluto's built-in DVB-S2 modulation daemon pluto_dvb."),
         ("Caution when checking firmware", "If you change the firmware, verify compatibility of pluto_dvb, the UDP TS receive path, frequency, modulation, FEC, roll-off, frame length and pilot setting before doing RF testing."),
+        ("Pluto username and password", "Do not change the Pluto's username (root) and password (analog) from the factory defaults. This app and Langstone V3 connect to the Pluto via SSH with these defaults to reboot it (at app start, app restart, equipment test and Langstone exit) and to read its settings. If they are changed, the Pluto cannot be rebooted."),
     ]),
 ]
