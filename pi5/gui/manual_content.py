@@ -15,6 +15,9 @@ MANUAL_SCREENSHOTS = {
 }
 
 MANUAL_SECTIONS = [
+    ("重要", [
+        ("Plutoのユーザー名・パスワード", "Plutoのユーザー名(root)・パスワード(analog)はデフォルト値のまま変更しないでください。本アプリとLangstone V3は、SSHでPlutoにログインしてリブートしています(アプリ起動時・アプリ再起動・機器試験・Langstone終了時)。変更するとPlutoをリブートできなくなります。"),
+    ]),
     ("クレジット", [
         ("クレジット",
          "受信部の方式考案・受信部原システム設計: 山崎慎慈氏(JE1BTA) rpi-dvbs2-receiver-guiの設計に基づきます\n"
@@ -140,6 +143,9 @@ MANUAL_SCREENSHOTS_EN = {
 }
 
 MANUAL_SECTIONS_EN = [
+    ("Important", [
+        ("Pluto username and password", "Keep the Pluto's username (root) and password (analog) at their default values. This app and Langstone V3 log in to the Pluto via SSH to reboot it (at app start, app restart, equipment test and Langstone exit). If they are changed, the Pluto cannot be rebooted."),
+    ]),
     ("Credits", [
         ("Credits",
          "Receiver method and original receiver system design: Shinji Yamazaki (JE1BTA), "

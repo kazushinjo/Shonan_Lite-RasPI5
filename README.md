@@ -9,6 +9,15 @@ The application lives under `pi5/` (Python/PyQt5, rendered directly via eglfs).
 > 本READMEは日本語と英語を併記しています。各節で日本語の後に英語が続きます。
 > This README is written in both Japanese and English. In each section, the Japanese text is followed by the English text.
 
+> [!IMPORTANT]
+> **Plutoのユーザー名(`root`)・パスワード(`analog`)はデフォルト値のまま変更しないでください。**
+> 本アプリとLangstone V3は、SSHでPlutoにログインしてリブートしています(アプリ起動時・アプリ再起動・
+> 機器試験・Langstone終了時)。変更するとPlutoをリブートできなくなります。
+>
+> **Keep the Pluto's username (`root`) and password (`analog`) at their default values.**
+> This app and Langstone V3 log in to the Pluto via SSH to reboot it (at app start, app restart,
+> equipment test and Langstone exit). If they are changed, the Pluto cannot be rebooted.
+
 ## 主な機能 / Features
 
 - **送信**: 周波数・シンボルレート(333〜2000 kS/s)・FEC・変調方式(QPSK/8PSK)・TX出力を画面で設定し、

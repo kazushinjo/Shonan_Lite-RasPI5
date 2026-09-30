@@ -76,6 +76,16 @@ for run in note.runs:
     run.italic=True
     run.font.color.rgb=RGBColor(100,100,100)
 
+# ★Plutoのユーザー名・パスワードを変えるとSSHリブートができなくなるため、本文の先頭で目立たせる。
+warn=d.add_paragraph();warn.paragraph_format.space_after=Pt(12)
+for text in ('【重要】Plutoのユーザー名(root)・パスワード(analog)はデフォルト値のまま変更しないでください。'
+             '本アプリとLangstone V3は、SSHでPlutoにログインしてリブートしています'
+             '(アプリ起動時・アプリ再起動・機器試験・Langstone終了時)。変更するとPlutoをリブートできなくなります。\n',
+             '[IMPORTANT] Keep the Pluto\'s username (root) and password (analog) at their default values. '
+             'This app and Langstone V3 log in to the Pluto via SSH to reboot it '
+             '(at app start, app restart, equipment test and Langstone exit). If they are changed, the Pluto cannot be rebooted.'):
+    run=warn.add_run(text);run.bold=True;run.font.color.rgb=RGBColor(192,0,0)
+
 for (title,items),(title_en,items_en) in BILINGUAL_SECTIONS:
     d.add_heading(f'{title} / {title_en}',level=1)
     image_names=MANUAL_SCREENSHOTS.get(title, [])
