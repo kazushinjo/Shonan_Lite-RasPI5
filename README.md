@@ -162,15 +162,9 @@ ipaddr_eth = 192.168.0.51
 netmask_eth = 255.255.255.0
 ```
 
-★Plutoのユーザー名(`root`)とパスワード(`analog`)は、工場出荷時のデフォルト値のまま
-変更しないこと。Shonan_LiteとLangstone V3は、Plutoの再起動(アプリ起動時・アプリ再起動・
-機器試験・Langstone終了時)と設定の読み出しに、このデフォルト値でSSH接続している。
-変更するとPlutoを再起動できなくなる。
+★Plutoのユーザー名(`root`)とパスワード(`analog`)は変更しないこと(理由は冒頭の「IMPORTANT」を参照)。
 
-★Keep the Pluto's username (`root`) and password (`analog`) at the factory defaults.
-Shonan_Lite and Langstone V3 connect to the Pluto via SSH with these defaults to reboot it
-(at app start, app restart, equipment test and Langstone exit) and to read its settings.
-If they are changed, the Pluto cannot be rebooted.
+★Do not change the Pluto's username (`root`) and password (`analog`) (see "IMPORTANT" at the top for why).
 
 ★USB直結時のUSB CDCネットワーク(`[NETWORK]`セクション、既定`192.168.2.1`)
 とは別の設定である。`[USB_ETHERNET]`は、Pluto(Pluto+)のUSB OTGポートに
