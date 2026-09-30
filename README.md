@@ -676,7 +676,7 @@ Shonan_Liteでの使い方:
 - ホーム画面の「Pluto電源」カードで、12 V系統を手動で電源サイクル(OFF→3秒待機→ON)できる。
 
 詳しくは[仕様書](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md)と
-[接続一覧](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md)を参照。
+[接続一覧](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md)を参照(どちらも日英併記。Word版・PDF版も同じフォルダにある)。
 回路図: [`w5500-esp32.pdf`](hardware/W5500_PA_PTT_Control/kicad/w5500-esp32.pdf)、
 実装図: [`w5500-esp32_実装図_部品番号.pdf`](hardware/W5500_PA_PTT_Control/fabrication/assembly/w5500-esp32_実装図_部品番号.pdf)。
 
@@ -696,8 +696,9 @@ How to use it with Shonan_Lite:
 - The 12 V power (including the Pluto) is switched ON/OFF with app start/exit, and the PTT with TX start/stop.
 - The "Pluto Power" card on the Home screen power-cycles the 12 V line manually (OFF → wait 3 s → ON).
 
-For details, see the [specification](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_spec_en.md) and the
-[connection list](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_connections_en.md).
+For details, see the [specification](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md) and the
+[connection list](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md) (both in Japanese and English;
+Word and PDF versions are in the same folder).
 Schematic: [`w5500-esp32.pdf`](hardware/W5500_PA_PTT_Control/kicad/w5500-esp32.pdf);
 assembly drawing: [`w5500-esp32_実装図_部品番号.pdf`](hardware/W5500_PA_PTT_Control/fabrication/assembly/w5500-esp32_実装図_部品番号.pdf).
 
@@ -745,9 +746,9 @@ ESP32 W5500 (PA_Power/PTT controller, [`hardware/W5500_PA_PTT_Control`](hardware
 - [`pi5/gui/manual_content.py`](pi5/gui/manual_content.py) — アプリ内Helpの内容(章データ)。操作説明書もこれから生成する / Content of the in-app Help (chapter data); the operation manual is also generated from it
 - [`pi5/docs/build_operation_manual.py`](pi5/docs/build_operation_manual.py) — 操作説明書(DOCX)の生成スクリプト / Script that generates the operation manual (DOCX)
   (`python pi5/docs/build_operation_manual.py`、python-docxが必要 / requires python-docx)
-- [`hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md`](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md) — ESP32 W5500(PA_Power/PTTコントローラ)の仕様書 / Specification of the ESP32 W5500 (PA_Power/PTT controller) (英語版 / English: [`W5500_PA_PTT_Control_spec_en.md`](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_spec_en.md))
+- [`hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md`](hardware/W5500_PA_PTT_Control/docs/W5500_PA_PTT_Control_仕様書.md) — ESP32 W5500(PA_Power/PTTコントローラ)の仕様書 / Specification of the ESP32 W5500 (PA_Power/PTT controller)(日英併記 / Japanese and English)
   - 仕様書・接続一覧のWord版・PDF版は[`hardware/W5500_PA_PTT_Control/docs/tools/build_docs.py`](hardware/W5500_PA_PTT_Control/docs/tools/build_docs.py)でMarkdownから作る(macOSで実行) / The Word and PDF versions of the specification and connection list are generated from Markdown with this script (run on macOS)
-- [`hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md`](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md) — ESP32・W5500の接続一覧 / Connection list of the ESP32 and W5500 (英語版 / English: [`MCU1_J1_W5500_connections_en.md`](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_connections_en.md))
+- [`hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md`](hardware/W5500_PA_PTT_Control/docs/MCU1_J1_W5500_接続一覧.md) — ESP32・W5500の接続一覧 / Connection list of the ESP32 and W5500(日英併記 / Japanese and English)
 - [`pi5/third_party/rpi-dvbs2-receiver-gui/`](pi5/third_party/rpi-dvbs2-receiver-gui/) — GNU Radio/gr-dvbs2rx受信フローグラフの参考実装(kazushinjo/rpi-dvbs2-receiver-guiより取り込み) / Reference implementation of the GNU Radio/gr-dvbs2rx receive flowgraph (imported from kazushinjo/rpi-dvbs2-receiver-gui)
 
 ## クレジット / Credits
