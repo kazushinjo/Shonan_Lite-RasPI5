@@ -206,6 +206,7 @@ class SettingsScreen(SettingsSubScreen):
         settings = self.main_window.settings
         settings.selected_band = band
         settings.use_custom_lo_frequency = False
+        settings.use_lnb = False
         lo_hz = BAND_PROFILES[band]["lo_hz"]
         if lo_hz is not None:
             settings.custom_lo_frequency_hz = lo_hz

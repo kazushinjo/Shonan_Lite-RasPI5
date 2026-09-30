@@ -628,6 +628,9 @@ class TxController(QtCore.QObject):
         if lo_hz is None:
             self.error.emit("周波数が未設定です(ループバック試験を選択中はFrequency画面で手動設定してください)")
             return
+        if settings.lnb_active():
+            self.error.emit("LNB使用中は送信できません(受信専用)。周波数画面でLNBをOFFにしてください")
+            return
 
         self._last_settings = settings
         self._last_mode = "video"
@@ -818,6 +821,9 @@ class TxController(QtCore.QObject):
         if lo_hz is None:
             self.error.emit("周波数が未設定です")
             return
+        if settings.lnb_active():
+            self.error.emit("LNB使用中は送信できません(受信専用)。周波数画面でLNBをOFFにしてください")
+            return
 
         self._last_settings = settings
         self._last_mode = "camera_audio"
@@ -963,7 +969,8 @@ class RxController(QtCore.QObject):
                 f"対応組み合わせ: {', '.join(RX_SUPPORTED_MODCODS)}"
             )
             return
-        lo_hz = settings.effective_lo_hz()
+        # ★LNB使用中は表示周波数(10GHz)ではなく、LNB局部発振を引いたIF周波数で受信する。
+        lo_hz = settings.rx_tune_hz()
         if lo_hz is None:
             self.error.emit("周波数が未設定です")
             return

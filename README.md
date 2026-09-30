@@ -32,6 +32,8 @@ The application lives under `pi5/` (Python/PyQt5, rendered directly via eglfs).
 - **プリセット**: 現在の設定を5件まで登録・呼び出し(プリセット1は未登録の間RFループバック試験用)。
 - **10GHz受信(LNB)**: Home画面の衛星をタップすると、Langstone V3を10236.5 MHz表示・
   Pluto受信486.5 MHz(LNB局部発振9750 MHz)の受信専用バンドで開く(下記参照)。
+  Shonan_Lite(DATV)でも、周波数画面で「10GHz帯」を押すとLNBを使用するか確認し、使用する場合は
+  表示周波数10.2365 GHz・Pluto受信486.5 MHzで受信する(受信専用、送信不可。「いいえ」なら従来どおり10180 MHz)。
 - **その他**: Pluto URIの自動検出、日本語/英語表示、日本語オンスクリーンキーボード、アプリ内Help、
   機器試験、起動時のアプリ選択(Shonan_Lite / Langstone V3)。
 
@@ -51,6 +53,9 @@ The application lives under `pi5/` (Python/PyQt5, rendered directly via eglfs).
 - **Presets**: Save and recall up to 5 sets of settings (preset 1 is used for the RF loopback test while it is empty).
 - **10 GHz reception (LNB)**: Tapping the satellite on the Home screen opens Langstone V3 on a receive-only band
   showing 10236.5 MHz, with the Pluto receiving at 486.5 MHz (LNB local oscillator 9750 MHz). See below.
+  In Shonan_Lite (DATV) as well, pressing "10GHz Band" on the Frequency screen asks whether to use an LNB;
+  if so, it receives with the displayed frequency 10.2365 GHz and the Pluto receiving at 486.5 MHz
+  (receive only, no transmit; "No" keeps 10180 MHz as before).
 - **Other**: Automatic Pluto URI detection, Japanese/English display, Japanese on-screen keyboard, in-app Help,
   equipment test, and application selection at boot (Shonan_Lite / Langstone V3).
 

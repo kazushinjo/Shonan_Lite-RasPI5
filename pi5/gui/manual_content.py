@@ -63,6 +63,7 @@ MANUAL_SECTIONS = [
     ]),
     ("4. 送信前の設定", [
         ("周波数", "周波数画面で運用周波数を選択または入力します。現在のRFループバック試験例は437,000 kHz（437.000 MHz）です。"),
+        ("10GHz帯とLNB", "周波数画面のバンド選択で「10GHz帯」を押すと、LNBを使用するかどうかを確認します。「はい」を選ぶと表示周波数は10.2365 GHz(10,236,500 kHz)になり、受信時はLNB局部発振9750 MHzを引いた486.5 MHzでPlutoが受信します(受信画面・RSSI測定も同じ)。LNB使用中は受信専用で、送信はできません。「いいえ」を選ぶと従来どおり10,180 MHz(LNBなし)です。「10GHz帯」を押し直すと選び直せ、他のバンドを選ぶとLNBは解除されます。LNBへの電源供給(同軸経由のバイアスT)は別途用意してください。"),
         ("出力設定", "出力設定画面の「Pluto URI」にPlutoのIPアドレスを入力します。「自動検出」を押すと、同一LAN上のPlutoを自動的に探して入力欄へ反映します(見つからない場合は電源とLAN配線を確認してください)。「送信先ポート(Pluto側固定)」は8282固定で変更できません。「受信TSポート」「ステータスポート」は必要に応じて変更します。"),
         ("シンボルレート", "送信信号のシンボルレートを設定します。RFループバック試験例は500 kS/sです。"),
         ("FEC・変調方式", "送信側と受信側でFECと変調方式を一致させます。試験例はQPSK、FEC 3/5です。変調方式はQPSK・8PSKから選び、FECの選択肢は選択中の変調方式で実際に動作する組み合わせのみに絞り込まれます(QPSK: 1/2・3/5・8/9、8PSK: 3/5・8/9。9/10は未実装のため選択肢に出ません)。"),
@@ -195,6 +196,7 @@ MANUAL_SECTIONS_EN = [
     ]),
     ("4. Settings Before Transmitting", [
         ("Frequency", "Select or enter the operating frequency on the Frequency screen. The current RF loopback test example is 437,000 kHz (437.000 MHz)."),
+        ("10 GHz band and LNB", "Pressing \"10GHz Band\" in the band selection on the Frequency screen asks whether to use an LNB. Choosing \"Yes\" sets the displayed frequency to 10.2365 GHz (10,236,500 kHz), and when receiving the Pluto receives at 486.5 MHz, i.e. minus the 9750 MHz LNB local oscillator (the same applies to the RX screen and RSSI measurement). While the LNB is in use it is receive only and transmitting is not possible. Choosing \"No\" gives 10,180 MHz (no LNB) as before. Press \"10GHz Band\" again to choose again; selecting another band cancels the LNB. Provide power for the LNB (bias-T over the coax) separately."),
         ("Stream Output", "Enter the Pluto's IP address in \"Pluto URI\" on the Stream Output screen. Pressing \"Detect\" automatically looks for a Pluto on the same LAN and fills it into the field (if not found, check the power and LAN wiring). \"Destination port (fixed on Pluto)\" is fixed at 8282 and cannot be changed. Change \"RX TS port\" and \"Status port\" as needed."),
         ("Symbol Rate", "Set the symbol rate of the transmitted signal. The RF loopback test example is 500 kS/s."),
         ("FEC and Modulation", "Match FEC and modulation between the transmitting and receiving sides. The test example is QPSK, FEC 3/5. Choose the modulation from QPSK and 8PSK, and the FEC choices are narrowed to combinations that actually work with the selected modulation (QPSK: 1/2, 3/5, 8/9; 8PSK: 3/5, 8/9; 9/10 is not implemented so it does not appear as a choice)."),
