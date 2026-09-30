@@ -99,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._build_keyboard_panel()
 
     def _power_on_mcu1_gpio26(self) -> None:
-        host = self.settings.ptt_controller_host
+        host = self.settings.active_ptt_controller_host()
         if not host:
             return
         try:
@@ -312,6 +312,15 @@ class MainWindow(QtWidgets.QMainWindow):
             route = command[len("navigate:"):]
             if route in self._screens:
                 self.navigate_to(route)
+        elif command.startswith("scroll:"):
+            # 表示中の画面を指定ピクセル位置までスクロールする(スクリーンショット撮影用)。
+            scroll_area = getattr(self.stack.currentWidget(), "scroll_area", None)
+            try:
+                position = int(command[len("scroll:"):])
+            except ValueError:
+                position = None
+            if scroll_area is not None and position is not None:
+                scroll_area.verticalScrollBar().setValue(position)
         socket.write(b"OK\n")
         socket.flush()
 
@@ -602,7 +611,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # 先にMCU1(ESP32)のGPIO26をOFFにしてから、実際の終了(super().closeEvent)を
         # MCU1_GPIO26_OFF_DELAY_SEC秒待つ(電源系統が安全に落ちきるのを待つ猶予)。
         # Pi5本体のGPIOは使用しない。
-        host = self.settings.ptt_controller_host
+        host = self.settings.active_ptt_controller_host()
         if host:
             try:
                 _send_ptt_channel_state(host, PTT_CHANNEL_POWER, "off")

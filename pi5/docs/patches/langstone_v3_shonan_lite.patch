@@ -1214,7 +1214,7 @@ diff -ruN a/run_pluto b/run_pluto
 +p = Path.home() / '.config' / 'shonan-pi5' / 'settings.json'
 +try:
 +    d = json.loads(p.read_text())
-+    print(d.get('ptt_controller_host', ''))
++    print(d.get('ptt_controller_host', '') if d.get('use_ptt_controller', True) else '')
 +except Exception:
 +    print('')
 +" 2>/dev/null)

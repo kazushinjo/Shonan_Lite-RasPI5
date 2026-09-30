@@ -663,9 +663,9 @@ class TxController(QtCore.QObject):
                 self.error.emit(f"Pluto設定送信に失敗しました: {exc}")
                 return
             output_url = _build_udp_ts_url(settings)
-        if settings.ptt_controller_host:
+        if settings.active_ptt_controller_host():
             try:
-                _send_ptt_request(settings.ptt_controller_host, "on")
+                _send_ptt_request(settings.active_ptt_controller_host(), "on")
             except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
                 self.log_line.emit(f"[PTT] ESP32への送信開始通知に失敗しました: {exc}")
         args = video_args + overlay_input_args + _audio_input_args() + overlay_filter_args + [
@@ -689,9 +689,9 @@ class TxController(QtCore.QObject):
     def stop(self) -> None:
         was_running = self.is_running()
         self._should_be_running = False
-        if was_running and self._last_settings and self._last_settings.ptt_controller_host:
+        if was_running and self._last_settings and self._last_settings.active_ptt_controller_host():
             try:
-                _send_ptt_request(self._last_settings.ptt_controller_host, "off")
+                _send_ptt_request(self._last_settings.active_ptt_controller_host(), "off")
             except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
                 self.log_line.emit(f"[PTT] ESP32への送信終了通知に失敗しました: {exc}")
         if not was_running:

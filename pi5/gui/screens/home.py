@@ -716,11 +716,12 @@ class HomeScreen(QtWidgets.QWidget):
     def _on_pluto_power_cycle_clicked(self) -> None:
         """PA_Power/PTTコントローラ(ESP32)のGPIO26(12V電源)をOFF→3秒待ち→ONする
         (Pluto+含む12V系統全体の電源サイクル)。"""
-        host = self.main_window.settings.ptt_controller_host
+        host = self.main_window.settings.active_ptt_controller_host()
         if not host:
             error_dialog(
                 self, "PTTコントローラ未設定",
-                "設定画面でPA_Power/PTTコントローラ(ESP32)のIPアドレスを設定してください。")
+                "設定画面で「ESP32 W5500を使用する」をONにし、"
+                "PA_Power/PTTコントローラ(ESP32)のIPアドレスを設定してください。")
             return
         try:
             _send_ptt_channel_state(host, PTT_CHANNEL_POWER, "off")
@@ -773,7 +774,7 @@ class HomeScreen(QtWidgets.QWidget):
             # ★Langstone V3自身は12V電源(GPIO26)に触れないため、切替時に
             # ここで明示的にONを送っておく(Langstone側の送信でPA電源が
             # 入っていない、という事態を避ける)。
-            host = self.main_window.settings.ptt_controller_host
+            host = self.main_window.settings.active_ptt_controller_host()
             if host:
                 try:
                     _send_ptt_channel_state(host, PTT_CHANNEL_POWER, "on")

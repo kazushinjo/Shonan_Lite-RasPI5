@@ -34,7 +34,7 @@ MANUAL_SECTIONS = [
     ]),
     ("1. 画面構成", [
         ("ホーム画面", "ホーム画面は各機能への入口です。「送信」「受信」「周波数」「RSSI測定」「シンボルレート」「誤り訂正(FEC)」「変調方式」「映像ソース」「出力設定」「RXゲイン」「TX出力」「設定」「機器試験」「ヘルプ」「アプリ再起動」「電源オフ」に加え、「Langstone(SDRトランシーバー)」「プリセット」への入口も表示します。"),
-        ("Pluto電源カード（オプション機能）", "「Pluto電源」カードは、PA_Power/PTTコントローラ(ESP32、hardware/W5500_PA_PTT_Control)を接続した環境専用のオプション機能です。押すとPTTコントローラ経由でPluto+含む12V系統をOFF→3秒待機→ONする電源サイクル操作を行います。PTTコントローラ未設定の環境では使用できません(設定画面でIPアドレス未設定の場合はエラー表示になります)。"),
+        ("Pluto電源カード（オプション機能）", "「Pluto電源」カードは、PA_Power/PTTコントローラ(ESP32、hardware/W5500_PA_PTT_Control)を接続した環境専用のオプション機能です。押すとPTTコントローラ経由でPluto+含む12V系統をOFF→3秒待機→ONする電源サイクル操作を行います。PTTコントローラ未設定の環境では使用できません(設定画面で「ESP32 W5500を使用する」がOFF、またはIPアドレス未設定の場合はエラー表示になります)。"),
         ("画面の共通操作", "各画面のボタンをタップして操作します。画面内の「ホームへ戻る」でホーム画面に戻ります。"),
     ]),
     ("2. 起動・終了と安全", [
@@ -46,7 +46,7 @@ MANUAL_SECTIONS = [
     ("3. 設定画面", [
         ("表示言語", "画面の表示言語を「日本語」「English」から選びます。選ぶとすぐに全画面の表示が切り替わり、設定は保存されます。"),
         ("送信先（Pluto Tx）", "PlutoのIPアドレスを入力します。UDP-TSポートは8282固定(Pluto側)です。"),
-        ("PA_Power/PTTコントローラ（ESP32）", "PA_Power/PTTコントローラ(ESP32+W5500、hardware/W5500_PA_PTT_Control)のIPアドレスを入力します。空欄なら連携しません。設定すると、送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源(Pluto+含む)を自動でON/OFFします。ホーム画面の「Pluto電源」カード(オプション機能)から手動での電源サイクル(OFF→3秒待機→ON)も行えます。"),
+        ("PA_Power/PTTコントローラ（ESP32）", "PA_Power/PTTコントローラ(ESP32+W5500、hardware/W5500_PA_PTT_Control)を使用するかどうかを「ESP32 W5500を使用する」で選び、IPアドレスを入力します。OFFまたは空欄なら連携しません(OFFにしてもIPアドレスは保持されます)。使用する場合、送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源(Pluto+含む)を自動でON/OFFします。ホーム画面の「Pluto電源」カード(オプション機能)から手動での電源サイクル(OFF→3秒待機→ON)も行えます。"),
         ("オンデバイス復調",
          "オンデバイス復調は開発時の動作確認用の機能です。ONにする操作をすると、まず確認ポップアップが表示されます。"
          "PlutoのTX端子とRX端子の間に40 dB以上の外部アッテネータが入っていない状態で送信するとPlutoを破損する恐れがある"
@@ -160,7 +160,7 @@ MANUAL_SECTIONS_EN = [
     ]),
     ("1. Screen Overview", [
         ("Home screen", "The Home screen is the entrance to every function. It shows \"Transmit\", \"Receive\", \"Frequency\", \"RSSI Measurement\", \"Symbol Rate\", \"FEC\", \"Modulation\", \"Video Source\", \"Stream Output\", \"RX Gain\", \"TX Power\", \"Config\", \"Diagnostic\", \"Help\", \"App Restart\" and \"Power Off\", plus entrances to \"Langstone (SDR Transceiver)\" and \"Presets\"."),
-        ("Pluto Power card (optional feature)", "The \"Pluto Power\" card is an optional feature only for environments with a PA_Power/PTT controller (ESP32, hardware/W5500_PA_PTT_Control) connected. Pressing it performs a power-cycle operation via the PTT controller: OFF → wait 3 seconds → ON for the 12 V line including the Pluto+. It cannot be used in environments without a PTT controller configured (shown as an error if the IP address is unset on the Settings screen)."),
+        ("Pluto Power card (optional feature)", "The \"Pluto Power\" card is an optional feature only for environments with a PA_Power/PTT controller (ESP32, hardware/W5500_PA_PTT_Control) connected. Pressing it performs a power-cycle operation via the PTT controller: OFF → wait 3 seconds → ON for the 12 V line including the Pluto+. It cannot be used in environments without a PTT controller configured (shown as an error if \"Use ESP32 W5500\" is OFF or the IP address is unset on the Settings screen)."),
         ("Common screen operation", "Tap each screen's buttons to operate it. \"Back to Home\" on a screen returns to the Home screen."),
     ]),
     ("2. Startup, Exit and Safety", [
@@ -172,7 +172,7 @@ MANUAL_SECTIONS_EN = [
     ("3. Settings Screen", [
         ("Display Language", "Choose the display language from \"日本語\" (Japanese) and \"English\". All screens switch immediately and the choice is saved."),
         ("Destination (Pluto Tx)", "Enter the Pluto's IP address. The UDP-TS port is fixed at 8282 (on the Pluto side)."),
-        ("PA_Power/PTT Controller (ESP32)", "Enter the IP address of the PA_Power/PTT controller (ESP32 + W5500, hardware/W5500_PA_PTT_Control). Leave it empty to disable the link. When set, PTT follows TX start/stop and the 12 V power (including the Pluto+) is switched ON/OFF automatically at app start/exit. A manual power cycle (OFF → wait 3 seconds → ON) is also available from the \"Pluto Power\" card (optional feature) on the Home screen."),
+        ("PA_Power/PTT Controller (ESP32)", "Choose whether to use the PA_Power/PTT controller (ESP32 + W5500, hardware/W5500_PA_PTT_Control) with \"Use ESP32 W5500\", and enter its IP address. The link is disabled when it is OFF or the address is empty (the IP address is kept even when OFF). When used, PTT follows TX start/stop and the 12 V power (including the Pluto+) is switched ON/OFF automatically at app start/exit. A manual power cycle (OFF → wait 3 seconds → ON) is also available from the \"Pluto Power\" card (optional feature) on the Home screen."),
         ("On-device Demodulation",
          "On-device demodulation is a feature for development testing. Turning it ON first shows a "
          "confirmation popup. It states in red that transmitting without a 40 dB or greater external "

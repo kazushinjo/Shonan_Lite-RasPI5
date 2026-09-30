@@ -118,6 +118,8 @@ class AppSettings:
     # PA_Power/PTTコントローラ(ESP32+W5500、hardware/W5500_PA_PTT_Control)のIPアドレス。
     # 空文字なら連携しない(未接続環境でもTX/RXの動作に影響しない)。
     ptt_controller_host: str = "192.168.0.100"
+    # 設定画面の「ESP32 W5500を使用する」。OFFならIPアドレスを保持したまま連携しない。
+    use_ptt_controller: bool = True
     tx_destination_port: int = 7272
     rx_listen_port: int = 4003
     rx_status_port: int = 4002
@@ -193,6 +195,10 @@ class AppSettings:
     def mod_cod(self) -> str:
         """FEC + Modulation を合成した --mod-cod 文字列。"""
         return f"{self.modulation_scheme}-S_{self.fec_rate}"
+
+    def active_ptt_controller_host(self) -> str:
+        """PTTコントローラ連携に使う接続先。未使用設定またはIP未設定なら""。"""
+        return self.ptt_controller_host if self.use_ptt_controller else ""
 
     def pluto_host(self) -> str:
         return normalize_pluto_host(self.pluto_uri)
