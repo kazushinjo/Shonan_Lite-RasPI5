@@ -600,6 +600,9 @@ The settings assume the frequency is down-converted at the antenna by an **LNB (
   (Langstone上で別のバンドに切り替えていた場合は、そのバンドのまま)。
 - LNBへの電源供給(同軸経由のバイアスT、12〜18 V)はShonan_Lite/Langstoneでは扱わない。
   別途用意すること。
+- Shonan_Lite(DATV)で10GHzをLNB受信する場合は、衛星ではなく周波数画面の「10GHz帯」を押し、
+  「LNBを使用しますか?」で「はい」を選ぶ(表示10.2365 GHz、Pluto受信486.5 MHz、受信専用で送信不可。
+  受信画面・RSSI測定もPluto受信周波数で動作する)。他のバンドを選ぶとLNBは解除される。
 
 <!-- English -->
 
@@ -616,6 +619,10 @@ The settings assume the frequency is down-converted at the antenna by an **LNB (
   from the satellite (if you switched to another band in Langstone, it stays on that band).
 - Power for the LNB (bias-T over the coax, 12–18 V) is not handled by Shonan_Lite/Langstone.
   Provide it separately.
+- To receive 10 GHz via an LNB in Shonan_Lite (DATV), press "10GHz Band" on the Frequency screen
+  (not the satellite) and answer "Yes" to "Use an LNB?" (displayed 10.2365 GHz, Pluto RX 486.5 MHz,
+  receive only with no transmit; the RX screen and RSSI measurement also use the Pluto RX frequency).
+  Selecting another band cancels the LNB.
 
 ## PA/LNAの送受信切替(ESP32 W5500なしでも可) / PA/LNA TX/RX switching (possible without ESP32 W5500)
 

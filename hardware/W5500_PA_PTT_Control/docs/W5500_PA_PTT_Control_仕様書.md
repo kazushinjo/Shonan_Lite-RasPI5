@@ -171,8 +171,13 @@ ESP32のIPアドレスはDHCP割当のため、shonan-android・Shonan_Lite-RasP
   `/ch?idx=0&state=on|off`を使用）。
   - アプリ起動から10秒後にGPIO26をON
   - アプリ終了時、先にGPIO26をOFFにしてから3秒待って実際に終了
-  - Pi5本体(Raspberry Pi5)のGPIOは一切使用しない。あくまでMCU1側のGPIO26を
+  - 12V電源の制御にPi5本体(Raspberry Pi5)のGPIOは使用しない。あくまでMCU1側のGPIO26を
     ネットワーク経由で制御する。
+- ★ESP32 W5500(本コントローラ)は必須ではない。Pi5本体のGPIO21(40番ピン、GNDは39番ピン)が
+  送信中HIGH(3.3V)・受信中LOWになるため、これをトランジスタ/リレードライバ等でバッファすれば
+  ESP32なしでもPA・LNAの送受信切替ができる(Langstone V3のTx Outputと同じピン。Shonan_Lite側は
+  `pi5/gui/backend.py`の`_set_pi5_tx_gpio()`で`pinctrl`により出力)。ESP32を併用する場合は
+  本コントローラのPTT(J6)も同時に切り替わる。12V電源のON/OFFは本コントローラが必要。
 
 ---
 
