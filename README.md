@@ -554,6 +554,21 @@ on the device). For details, see
 [`pi5/docs/patches/langstone_v3_shonan_lite.patch`](pi5/docs/patches/langstone_v3_shonan_lite.patch)
 (diff against upstream).
 
+起動直後の受信設定の取りこぼしも修正済み。本家のGUIは、GNU Radioフローグラフが
+受信設定用のFIFO(`/tmp/langstoneTRx`)を開く前にモード・フィルタ・オフセット等を送り、
+届かなかった分を捨てていた。そのためフローグラフが初期値(USB・オフセット0等)のまま動き、
+Sメーター・ノイズレベルが本来より高く出ることがあった(Shonan_Liteから切り替えた直後に
+S2前後、MODEやBANDを操作し直すとS0になる、を実機で確認)。起動時にフローグラフがFIFOを
+開くまで(最大20秒)待ってから設定を送るようにした(`waitForFlowgraph()`)。
+
+The loss of receive settings right after startup has also been fixed. The upstream GUI sent the mode,
+filters, offset, etc. before the GNU Radio flowgraph opened its settings FIFO (`/tmp/langstoneTRx`)
+and discarded whatever could not be delivered, so the flowgraph kept running with its defaults
+(USB, offset 0, etc.) and the S-meter and noise level could read higher than they should (confirmed
+on the device: about S2 right after switching from Shonan_Lite, S0 after pressing MODE or BAND again).
+At startup it now waits until the flowgraph opens the FIFO (up to 20 s) before sending the settings
+(`waitForFlowgraph()`).
+
 `g4eml/Langstone-V3`本家が更新された場合、`pi5/third_party/Langstone-V3/`を
 直接上書きすると上記の改造が失われる。
 [`pi5/scripts/update_langstone_from_upstream.sh`](pi5/scripts/update_langstone_from_upstream.sh)

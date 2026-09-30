@@ -85,6 +85,7 @@ int duplexMode(void);
 int multMode(void);
 void setMoni(int m);
 void initSDR(void);
+void waitForFlowgraph(void);
 void waterfall(void);
 void clearWaterfall(void);
 void P_Meter(void);
@@ -1608,8 +1609,30 @@ void clearWaterfall(void)
 }
 
 
+// ★Shonan_Lite-pi5統合版パッチ: GNU Radioフローグラフ(Lang_TRX_Pluto.py)が
+// /tmp/langstoneTRxを読み始めるまで待つ(最大20秒)。sendFifo()は読み手が
+// いないと約0.1秒で諦めるため、起動直後に送ったモード・フィルタ・オフセット
+// 等が届かず、フローグラフが初期値(USB・オフセット0等)のまま動いてしまう
+// (Shonan_Liteから切り替えた直後にSメーター・ノイズレベルが高く出る原因。
+// MODEやBANDを操作し直すと正常値に戻ることを実機で確認)。
+void waitForFlowgraph(void)
+{
+  for(int i=0;i<200;i++)
+    {
+      int fd=open("/tmp/langstoneTRx",O_WRONLY|O_NONBLOCK);
+      if(fd>=0)
+        {
+          close(fd);
+          return;
+        }
+      usleep(100000);
+    }
+  printf("GNU Radio flowgraph did not open /tmp/langstoneTRx\n");
+}
+
 void initSDR(void)
 {
+  waitForFlowgraph();
   setBand(band);
   setMode(mode); 
   setVolume(volume);

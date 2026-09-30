@@ -425,7 +425,15 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  void setFreq(double fr);
  void displayFreq(double fr);
  void setFreqInc();
-@@ -135,6 +148,10 @@
+@@ -72,6 +85,7 @@
+ int multMode(void);
+ void setMoni(int m);
+ void initSDR(void);
++void waitForFlowgraph(void);
+ void waterfall(void);
+ void clearWaterfall(void);
+ void P_Meter(void);
+@@ -135,6 +149,10 @@
  int bandSSBFiltLow[numband]={300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300,300};
  int bandSSBFiltHigh[numband]={3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000,3000};
  int bandFFTBW[numband]={0};
@@ -436,7 +444,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  
  #define minFreq 0.0
  #define maxFreq 99999.99999
-@@ -166,9 +183,13 @@
+@@ -166,9 +184,13 @@
  //GUI Layout values X and Y coordinates for each group of buttons.
  
  #define volButtonX 660
@@ -452,7 +460,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  #define ritButtonX 670
  #define ritButtonY 60
  #define funcButtonsY 429
-@@ -193,8 +214,21 @@
+@@ -193,8 +215,21 @@
  #define settingY 390
  #define popupX 30
  #define popupY 374
@@ -476,7 +484,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  #define sMeterX 2
  #define sMeterY 5
  #define sMeterWidth 170
-@@ -315,9 +349,12 @@
+@@ -315,9 +350,12 @@
  FILE *txfftstream;
  float buf[512][130];
  int points=512;
@@ -491,7 +499,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  unsigned char * palette;
  int HzPerBin=94;                        //calculated from FFT width and number of samples. Width=48000 number of samples =512
  int bwBarStart=3;
-@@ -351,7 +388,17 @@
+@@ -351,7 +389,17 @@
    strcat(plutoip,penv);
  
    printf("plutoip = %s\n",plutoip);
@@ -510,7 +518,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    startGNURadio();
     
    initUDP();
-@@ -364,6 +411,7 @@
+@@ -364,6 +412,7 @@
    initPluto();
    initFifos();
    initScreen();
@@ -518,7 +526,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    initGPIO();
    printf("Initialising Touch at %s\n",touchPath);
    if(touchPresent) initTouch(touchPath);
-@@ -655,41 +703,52 @@
+@@ -655,41 +704,52 @@
      
          //draw waterfall
          for(int r=0;r<rows;r++)
@@ -586,7 +594,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
          }
            
            //draw Bandwidth indicator
-@@ -712,68 +771,68 @@
+@@ -712,68 +772,68 @@
             centreShift=0;          
            }
  
@@ -689,7 +697,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
                displayStr(" +2.5k   ");
              break;
            }
-@@ -832,23 +891,20 @@
+@@ -832,23 +892,20 @@
            
            
            //Draw S meter
@@ -716,7 +724,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
            drawLine(sMeterX+6+110,sMeterY+5+ln,redbit,sMeterY+5+ln,255,0,0);
            drawLine(redbit,sMeterY+5+ln,sMeterX+6+160,sMeterY+5+ln,0,0,0);
            }
-@@ -969,10 +1025,7 @@
+@@ -969,10 +1026,7 @@
               if(sMeter<0) sMeter=0;
            
            //Draw PO meter
@@ -728,7 +736,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  
            for(int ln=0;ln<10;ln++)
            {
-@@ -1384,6 +1437,22 @@
+@@ -1384,6 +1438,22 @@
    lgGpioClaimOutput(gpiohandle,0,bandPin7,0); 
    lgGpioClaimOutput(gpiohandle,0,bandPin8,0); 
    lastKey=1;
@@ -751,7 +759,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  }
  
  void processGPIO(void)
-@@ -1394,7 +1463,7 @@
+@@ -1394,7 +1464,7 @@
    p1=lgGpioRead(gpiohandle,pttPin);
    k1=lgGpioRead(gpiohandle,keyPin);
  
@@ -760,7 +768,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
      if(p1==0)             //if the hardware PTT has been pressed
          {
            if(ptt==0)
-@@ -1402,6 +1471,7 @@
+@@ -1402,6 +1472,7 @@
                ptt=1;
                if(ptts==1) setPtts(0);                       //turn off the touchscreen PTT.
                setTx(ptt|ptts);
@@ -768,7 +776,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
              }
          }
       else
-@@ -1410,6 +1480,7 @@
+@@ -1410,6 +1481,7 @@
              {
                ptt=0;
                setTx(ptt|ptts);
@@ -776,7 +784,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
              }
          }
  
-@@ -1460,9 +1531,10 @@
+@@ -1460,9 +1532,10 @@
      }
    displayButton("SQL");
    textSize=2;
@@ -789,7 +797,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(sqlStr,"%d",squelch);
    displayStr(sqlStr);
  }
-@@ -1478,8 +1550,7 @@
+@@ -1478,8 +1551,7 @@
    else
      {
        setForeColour(0,0,0);
@@ -799,7 +807,38 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
      }
    gotoXY(ritButtonX,ritButtonY);
    displayButton("RIT");
-@@ -1611,6 +1682,14 @@
+@@ -1545,8 +1617,30 @@
+ }
+ 
+ 
++// ★Shonan_Lite-pi5統合版パッチ: GNU Radioフローグラフ(Lang_TRX_Pluto.py)が
++// /tmp/langstoneTRxを読み始めるまで待つ(最大20秒)。sendFifo()は読み手が
++// いないと約0.1秒で諦めるため、起動直後に送ったモード・フィルタ・オフセット
++// 等が届かず、フローグラフが初期値(USB・オフセット0等)のまま動いてしまう
++// (Shonan_Liteから切り替えた直後にSメーター・ノイズレベルが高く出る原因。
++// MODEやBANDを操作し直すと正常値に戻ることを実機で確認)。
++void waitForFlowgraph(void)
++{
++  for(int i=0;i<200;i++)
++    {
++      int fd=open("/tmp/langstoneTRx",O_WRONLY|O_NONBLOCK);
++      if(fd>=0)
++        {
++          close(fd);
++          return;
++        }
++      usleep(100000);
++    }
++  printf("GNU Radio flowgraph did not open /tmp/langstoneTRx\n");
++}
++
+ void initSDR(void)
+ {
++  waitForFlowgraph();
+   setBand(band);
+   setMode(mode); 
+   setVolume(volume);
+@@ -1611,6 +1705,14 @@
      displayButton("BEACON");
      }
  
@@ -814,7 +853,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    if(ptt|ptts)
      {
      setForeColour(255,0,0);  
-@@ -1899,15 +1978,7 @@
+@@ -1899,15 +2001,7 @@
        return;
        }
      }
@@ -830,7 +869,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  if(buttonTouched(sMeterX,sMeterY))                        //touch on s-Meter
  {
     if(sMeterType == 0)
-@@ -2061,16 +2132,38 @@
+@@ -2061,16 +2155,38 @@
           sendFifo("Q");       //kill the SDR
           clearScreen();
           writeConfig();
@@ -872,7 +911,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  if(buttonTouched(funcButtonsX+buttonSpaceX*6,funcButtonsY))   //Button 7 = PTT  or OFF
      {
      if(inputMode==FREQ)
-@@ -2092,7 +2185,8 @@
+@@ -2092,7 +2208,8 @@
        sendFifo("Q");       //kill the SDR 
        writeConfig();
        iio_context_destroy(plutoctx);
@@ -882,7 +921,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
        sleep(2);
        system("sudo poweroff");                          
        return;      
-@@ -2122,7 +2216,7 @@
+@@ -2122,7 +2239,7 @@
  
  
  //touch on spectrum display increments the FFT Bandwidth
@@ -891,7 +930,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    {
      bandFFTBW[band]++;
      if(bandFFTBW[band] > 3)  bandFFTBW[band] = 0;
-@@ -2223,6 +2317,12 @@
+@@ -2223,6 +2340,12 @@
  
  void setPtts(int p)
  {
@@ -904,7 +943,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
   if(p==1)
   {
    ptts=1;
-@@ -2259,6 +2359,8 @@
+@@ -2259,6 +2382,8 @@
  
  void setBeacon(int b)
  {
@@ -913,7 +952,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
   if(b > 0)
     {
        sendBeacon=b;
-@@ -2312,9 +2414,10 @@
+@@ -2312,9 +2437,10 @@
    sendFifo(volStr);
    setForeColour(0,255,0);
    textSize=2;
@@ -926,7 +965,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(volStr,"%d",vol);
    displayStr(volStr);
    
-@@ -2327,9 +2430,10 @@
+@@ -2327,9 +2453,10 @@
    sprintf(sqlStr,"S%d",sql);
    setForeColour(0,255,0);
    textSize=2;
@@ -939,7 +978,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    sprintf(sqlStr,"%d",sql);
    displayStr(sqlStr);
    configCounter=configDelay;
-@@ -2366,11 +2470,8 @@
+@@ -2366,11 +2493,8 @@
      gotoXY(ritButtonX,ritButtonY);
      setForeColour(0,255,0);
      displayButton("RIT");
@@ -952,7 +991,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  inputMode=m;
  
  if(inputMode==FREQ)
-@@ -2402,9 +2503,6 @@
+@@ -2402,9 +2526,6 @@
      gotoXY(ritButtonX,ritButtonY);
      setForeColour(255,0,0);
      displayButton("RIT");
@@ -962,7 +1001,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    }
  
  }
-@@ -2611,6 +2709,16 @@
+@@ -2611,6 +2732,16 @@
  
  void setTx(int pt)
  {
@@ -979,7 +1018,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
    if((pt==1)&&(transmitting==0))
      {
      if(firstpass == 0)                                      //don't set the Output pins if we are still initialising
-@@ -2773,47 +2881,139 @@
+@@ -2773,47 +2904,139 @@
    setPlutoTxFreq(txfreqhz);          //Control Pluto directly to bypass problems with Gnu Radio Sink
  }
  
@@ -1036,7 +1075,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 -          setPixel(currentX+p,currentY+2,0,0,bb);
 -          setPixel(currentX+p,currentY+3,0,0,bb);
 +          setPixel(slotX + x, freqDisplayY + y, backColourR, backColourG, backColourB);
-+        }
+         }
 +    }
 +
 +  if (codepoint == ' ') return;
@@ -1059,7 +1098,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +          int blG = backColourG + ((G - backColourG) * cov) / 255;
 +          int blB = backColourB + ((B - backColourB) * cov) / 255;
 +          setPixel(originX + col, originY + row, blR, blG, blB);
-         }
++        }
 +    }
 +}
 +
@@ -1111,7 +1150,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +  if (ttFontReady)
 +    {
 +      displayFreqTTF(fr);
-+    }
+     }
 +  else
 +    {
 +      gotoXY(freqDisplayX,freqDisplayY);
@@ -1128,7 +1167,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
 +      displayChar('.');
 +      displayChar(digit[9]);
 +      displayChar(digit[10]);
-     }
++    }
  
 +// ★Shonan_Lite-pi5統合版パッチ: 選択中のチューニング桁を下線で示す。
 +// 元は全12桁に線を描画し非選択桁も黒線として見えてしまっていたため、
@@ -1154,7 +1193,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  }
  
  void setFreq(double fr)
-@@ -3825,6 +4025,8 @@
+@@ -3825,6 +4048,8 @@
      if(strstr(variable,vname)) sscanf(value,"%d",&bandSSBFiltHigh[b]); 
      sprintf(vname,"bandFFTBW%02d",b);
      if(strstr(variable,vname)) sscanf(value,"%d",&bandFFTBW[b]);    
@@ -1163,7 +1202,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
      }
  
      
-@@ -3902,6 +4104,7 @@
+@@ -3902,6 +4127,7 @@
    fprintf(conffile,"bandSSBFiltLow%02d %d\n",b,bandSSBFiltLow[b]);
    fprintf(conffile,"bandSSBFiltHigh%02d %d\n",b,bandSSBFiltHigh[b]);
    fprintf(conffile,"bandFFTBW%02d %d\n",b,bandFFTBW[b]);    
@@ -1171,7 +1210,7 @@ diff -ruN a/LangstoneGUI_Pluto.c b/LangstoneGUI_Pluto.c
  }
  
  fprintf(conffile,"currentBand %d\n",band);
-@@ -3926,7 +4129,8 @@
+@@ -3926,7 +4152,8 @@
  {
     printf("Starting GNU Radio\n");
     FFTTimeout = FFTTIMEOUT * 5;                                //allow time to start
