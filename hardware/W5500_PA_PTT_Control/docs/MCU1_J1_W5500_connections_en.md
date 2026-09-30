@@ -27,7 +27,7 @@ are common to MCU1 and J1.
 | SPI SCK | GPIO18 (32) | SCK (4) | Same as above |
 | SPI MISO | GPIO19 (33) | MISO (12) | Same as above |
 | SPI MOSI | GPIO23 (39) | MOSI (3) | Same as above |
-| W5500 RST | GPIO21 (35) | RST (11) | Same net for all three (GPIO-controlled reset; the firmware sends a pulse at startup) |
+| W5500 RST | GPIO21 (35) | RST (11) | Same net for all three (GPIO-controlled reset; the firmware sends a pulse at startup). Pulled up to +3V3_A by R9 (10 kΩ) |
 | POWER (12 V power) control | GPIO26 (11) | — | Not connected to the W5500. The net label is `GPIO26_PA`, but it actually controls the 12 V power ON/OFF (see the table below) |
 | PTT control | GPIO27 (10) | — | Not connected to the W5500. The net label is `GPIO27_PTT`. Pulls the radio's PTT terminal to GND (see the table below) |
 | GND | GND (7) | 1, 2, 7 | Common GND. J1 and MCU1 also have GND pins at 21–24, 34 and 40, which are unconnected |
@@ -65,7 +65,7 @@ the W5500.
 | GPIO | Path | Parts | Notes |
 |---|---|---|---|
 | GPIO26 (POWER) | GPIO26 → R6 → Q1 (B) | R6: 510 Ω, Q1: 2SC1815 (NPN) | When GPIO26 is HIGH, Q1 turns ON and pulls Q5's gate toward GND |
-| ↳ | Q1 (C) → Q5 (G), pulled up by R8 | R8: 10 kΩ (pull-up to +12 V), Q5: 2SJ334 (PMOS, TO-220) | When Q1 is OFF, R8 pulls the gate up to +12 V and Q5 (high-side switch) is OFF |
+| ↳ | Q1 (C) → Q5 (G), pulled up by R8 | R8: 100 Ω (pull-up to +12 V), Q5: 2SJ334 (PMOS, TO-220) | When Q1 is OFF, R8 pulls the gate up to +12 V and Q5 (high-side switch) is OFF |
 | ↳ | Q5 (S) = +12 V, Q5 (D) → J5 (Power) | J5: Power output connector | When Q5 is ON, +12 V conducts to J5 (Power) (replaces the former relay K3) |
 | GPIO27 (PTT) | GPIO27 → R7 → Q3 (B) | R7: 510 Ω, Q3: 2SC1815 (NPN) | When GPIO27 is HIGH, Q3 turns ON |
 | ↳ | Q3 (C) → J6 (PTT_ON) | — | When Q3 (acting like an open collector) is ON, it pulls J6 (PTT_ON) to GND (intended for connection to the radio's PTT terminal; high impedance when Q3 is OFF) |

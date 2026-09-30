@@ -8,8 +8,8 @@ title: ESP32+W5500 12V電源/PTT制御 開発仕様書
 
 | 項目 | 内容 |
 |---|---|
-| 版数 | Rev.2.2 |
-| 作成日 | 2026-08-07（Rev.2.0更新: 2026-08-30、実機回路(KiCad)に合わせて全面改訂／Rev.2.1更新: 2026-08-30、電源系統を訂正。J3(外付けDCDCバックコンバータ)は廃止し、U2(L7805)の+5VをMCU1とU1(TA48033S)の両方に供給する単一系統に修正／Rev.2.2更新: 2026-08-31、J1をFreenove実機の40pin DevKitCソケット配列に修正しMCU1もJ1と同じピン番号・信号名に統一。Power(スイッチ後12V)系統に赤色LED(D1)、+12V(入力側)系統に緑色LED(D2)の表示回路を追加） |
+| 版数 | Rev.2.3 |
+| 作成日 | 2026-08-07（Rev.2.0更新: 2026-08-30、実機回路(KiCad)に合わせて全面改訂／Rev.2.1更新: 2026-08-30、電源系統を訂正。J3(外付けDCDCバックコンバータ)は廃止し、U2(L7805)の+5VをMCU1とU1(TA48033S)の両方に供給する単一系統に修正／Rev.2.2更新: 2026-08-31、J1をFreenove実機の40pin DevKitCソケット配列に修正しMCU1もJ1と同じピン番号・信号名に統一。Power(スイッチ後12V)系統に赤色LED(D1)、+12V(入力側)系統に緑色LED(D2)の表示回路を追加／Rev.2.3更新: 2026-09-30、R8を100Ωに変更(KiCad回路図に合わせる)しR9を追記、IPアドレスの記述を固定IP方式に統一、12V電源ONまでの遅延を実装値(5秒)に訂正、Shonan_Lite-RasPI5側の「ESP32 W5500を使用する」設定とPi5 GPIO21によるPTT出力を追記） |
 | 対象ボード | ESP32 (WROVER系、無印ESP32) + W5500 イーサネットモジュール |
 | 対象スケッチ | `hardware/W5500_PA_PTT_Control/W5500_PA_PTT_Control.ino` |
 | 連携先 | shonan-android（DATV送信アプリ）、Shonan_Lite-RasPI5（pi5/gui、送信画面のTX開始/終了およびアプリ起動/終了に連動） |
@@ -45,7 +45,9 @@ Rev.1.1まではLNA/PTT/PAの3ch・シーケンス制御（送信時にLNAを切
 | W5500 イーサネットモジュール | SPI接続。MACアドレス内蔵なしのためスケッチ内で任意設定 |
 | Q5 (2SJ334) | P-ch パワーMOSFET。12V電源のハイサイドスイッチ（旧リレーK3を置き換え） |
 | Q1 (2SC1815) | Q5のゲート駆動用NPNトランジスタ（GPIO26でON/OFF） |
+| R8 (100Ω) | Q5のゲートを+12Vへプルアップする抵抗（Q1 OFF時にQ5をOFFに保つ） |
 | Q3 (2SC1815) | PTT_ON信号駆動用NPNトランジスタ（GPIO27でON/OFF、オープンコレクタ的にGND側へ落とす） |
+| R9 (10kΩ) | W5500(A1)のRST(GPIO21と同一ネット)を+3V3_Aへプルアップする抵抗 |
 | J2 (DC_IN_13V8) | 外部電源(13.8V/12V系)の入力コネクタ |
 | U2 (L7805) | +12V→+5Vのリニアレギュレータ(TO-220)。生成した+5V(`+5v0`)はMCU1(J1)とU1の両方に供給される |
 | U1 (TA48033S) | U2出力の+5V→+3.3Vのリニアレギュレータ(TO-220)。W5500(A1)のVCC(+3V3_A)専用 |
@@ -114,7 +116,7 @@ Rev.1.1までの「LNA off→100ms待機→PTT/PA on」のようなシーケン�
 
 ### 3.2 12V電源（Shonan_Lite-RasPI5アプリ起動/終了連動）
 
-- アプリ起動から10秒後: `GET /ch?idx=0&state=on` → 設定した遅延時間(`power_delay_sec`、デフォルト3秒)後にPOWER(GPIO26) ON
+- アプリ起動から5秒後: `GET /ch?idx=0&state=on` → 設定した遅延時間(`power_delay_sec`、デフォルト3秒)後にPOWER(GPIO26) ON
 - アプリ終了時: 先に `GET /ch?idx=0&state=off` → POWER(GPIO26) 即時OFF（保留中のON遅延はキャンセルされる）、その後3秒待ってからアプリを終了
 
 ### 3.3 設計意図
@@ -155,13 +157,15 @@ Rev.1.1までの「LNA off→100ms待機→PTT/PA on」のようなシーケン�
 送信終了時: GET http://<ESP32のIPアドレス>/tx?state=off
 ```
 
-ESP32のIPアドレスはDHCP割当のため、shonan-android・Shonan_Lite-RasPI5(pi5/gui)いずれも
-設定画面で利用者がIPを入力・保持する運用を想定する（★DDNS/mDNS等による自動検出は本版では未実装）。
+ESP32のIPアドレスは固定IP(初期値`192.168.0.100`、4.1参照)のため、shonan-android・Shonan_Lite-RasPI5(pi5/gui)
+いずれも設定画面で利用者が同じIPアドレスを入力・保持する運用とする。ESP32側のIPを`/config/network`で
+変更した場合は、アプリ側の設定も合わせて変更すること（★DDNS/mDNS等による自動検出は本版では未実装）。
 
 ### 4.4 Shonan_Lite-RasPI5(pi5/gui)側の連携
 
-- 設定画面(`pi5/gui/screens/settings.py`)の「PA_Power/PTTコントローラ (ESP32)」欄にESP32のIPアドレスを
-  設定する。空欄の場合は連携自体を行わない（未接続環境でもTX/RXの動作に影響しない）。
+- 設定画面(`pi5/gui/screens/settings.py`)の「PA_Power/PTTコントローラ (ESP32)」欄で「ESP32 W5500を使用する」を
+  ONにし、ESP32のIPアドレスを設定する。OFFまたは空欄の場合は連携自体を行わない（OFFにしてもIPアドレスは
+  保持される。未接続環境でもTX/RXの動作に影響しない）。
 - `pi5/gui/backend.py` の `TxController.start()` 冒頭で `/tx?state=on`、`stop()` 冒頭で
   `/tx?state=off` をGETする（PTTのみをON/OFFする）。タイムアウトは短く(1.5秒)設定し、
   ESP32が未接続/未応答でも例外を握りつぶしてTX本体の動作を妨げない（ログにのみ記録）。
@@ -171,7 +175,7 @@ ESP32のIPアドレスはDHCP割当のため、shonan-android・Shonan_Lite-RasP
 - 上記PTT切替とは別に、Pi5アプリ(`pi5/gui/main.py`)自体の起動/終了に連動して
   GPIO26(POWERチャンネル、idx=0)を明示的に制御する（`_send_ptt_channel_state()`、
   `/ch?idx=0&state=on|off`を使用）。
-  - アプリ起動から10秒後にGPIO26をON
+  - アプリ起動から5秒後にGPIO26をON(Langstone V3への切替時・起動メニューでLangstoneを選んだ時もON)
   - アプリ終了時、先にGPIO26をOFFにしてから3秒待って実際に終了
   - 12V電源の制御にPi5本体(Raspberry Pi5)のGPIOは使用しない。あくまでMCU1側のGPIO26を
     ネットワーク経由で制御する。
@@ -186,7 +190,7 @@ ESP32のIPアドレスはDHCP割当のため、shonan-android・Shonan_Lite-RasP
 ## 5. 未確定・今後の課題
 
 - ★ 12V電源／PTTの実際の駆動回路との結合試験（Q1/Q3/Q5の実機動作確認）は未実施。
-- ★ IPアドレス固定化またはmDNS対応（`http://shonan-ptt.local/` 等）は未実装。運用上必要であれば追加検討。
+- ★ mDNS対応（`http://shonan-ptt.local/` 等）による自動検出は未実装（IPアドレスは固定IP方式で、アプリ側に手入力する）。運用上必要であれば追加検討。
 - ★ shonan-androidアプリ側でのHTTPリクエスト送出実装は本スケッチのスコープ外。アプリ側の送信ボタンハンドラに追加が必要。
 - 実機ESP32への書き込みは完了（2026-08-30、MAC: `70:4b:ca:7b:eb:94`）。ただしW5500・12V電源/PTT駆動回路を実際に接続した結合試験、Pi5(pi5/gui)側との通信確認は未実施。
 - GPIO25(旧LNA)は物理的に未接続のまま。今後LNA制御が必要になった場合は、駆動回路の追加とスケッチ・本書の再改訂が必要。

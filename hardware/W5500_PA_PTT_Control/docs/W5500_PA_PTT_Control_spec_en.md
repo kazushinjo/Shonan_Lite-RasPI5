@@ -9,8 +9,8 @@ If the two differ, the Japanese original takes precedence.
 
 | Item | Details |
 |---|---|
-| Revision | Rev.2.2 |
-| Created | 2026-08-07 (Rev.2.0 update: 2026-08-30, fully revised to match the actual circuit (KiCad) / Rev.2.1 update: 2026-08-30, power system corrected: J3 (external DC-DC buck converter) removed, and the +5 V from U2 (L7805) now feeds both MCU1 and U1 (TA48033S) as a single system / Rev.2.2 update: 2026-08-31, J1 corrected to the pinout of the actual Freenove 40-pin DevKitC socket and MCU1 unified with J1's pin numbers and signal names; indicator circuits added: a red LED (D1) on the Power (switched 12 V) line and a green LED (D2) on the +12 V (input side) line) |
+| Revision | Rev.2.3 |
+| Created | 2026-08-07 (Rev.2.0 update: 2026-08-30, fully revised to match the actual circuit (KiCad) / Rev.2.1 update: 2026-08-30, power system corrected: J3 (external DC-DC buck converter) removed, and the +5 V from U2 (L7805) now feeds both MCU1 and U1 (TA48033S) as a single system / Rev.2.2 update: 2026-08-31, J1 corrected to the pinout of the actual Freenove 40-pin DevKitC socket and MCU1 unified with J1's pin numbers and signal names; indicator circuits added: a red LED (D1) on the Power (switched 12 V) line and a green LED (D2) on the +12 V (input side) line / Rev.2.3 update: 2026-09-30, R8 changed to 100 Ω (to match the KiCad schematic) and R9 added, IP address description unified to the fixed-IP method, the delay until the 12 V power turns ON corrected to the implemented value (5 seconds), and the "Use ESP32 W5500" setting and PTT output via Pi 5 GPIO21 on the Shonan_Lite-RasPI5 side added) |
 | Target board | ESP32 (WROVER family, plain ESP32) + W5500 Ethernet module |
 | Target sketch | `hardware/W5500_PA_PTT_Control/W5500_PA_PTT_Control.ino` |
 | Connected apps | shonan-android (DATV transmit app), Shonan_Lite-RasPI5 (pi5/gui; linked to TX start/stop on the transmit screen and to app start/exit) |
@@ -46,7 +46,9 @@ Up to Rev.1.1, 3-channel LNA/PTT/PA sequence control was assumed (e.g. disconnec
 | W5500 Ethernet module | SPI connection. Has no built-in MAC address, so it is set arbitrarily in the sketch |
 | Q5 (2SJ334) | P-channel power MOSFET. High-side switch for the 12 V power (replaces the former relay K3) |
 | Q1 (2SC1815) | NPN transistor driving Q5's gate (switched by GPIO26) |
+| R8 (100 Ω) | Pull-up resistor from Q5's gate to +12 V (keeps Q5 OFF while Q1 is OFF) |
 | Q3 (2SC1815) | NPN transistor driving the PTT_ON signal (switched by GPIO27; pulls down to GND like an open collector) |
+| R9 (10 kΩ) | Pull-up resistor from the W5500 (A1) RST (same net as GPIO21) to +3V3_A |
 | J2 (DC_IN_13V8) | Input connector for the external power supply (13.8 V/12 V) |
 | U2 (L7805) | +12 V → +5 V linear regulator (TO-220). The generated +5 V (`+5v0`) feeds both MCU1 (J1) and U1 |
 | U1 (TA48033S) | +5 V (U2 output) → +3.3 V linear regulator (TO-220). Dedicated to the W5500 (A1) VCC (+3V3_A) |
@@ -112,7 +114,7 @@ Sequence control such as "LNA off → wait 100 ms → PTT/PA on" used up to Rev.
 
 ### 3.2 12 V Power (linked to Shonan_Lite-RasPI5 app start/exit)
 
-- 10 seconds after app start: `GET /ch?idx=0&state=on` → POWER (GPIO26) ON after the configured delay (`power_delay_sec`, default 3 seconds)
+- 5 seconds after app start: `GET /ch?idx=0&state=on` → POWER (GPIO26) ON after the configured delay (`power_delay_sec`, default 3 seconds)
 - At app exit: first `GET /ch?idx=0&state=off` → POWER (GPIO26) OFF immediately (a pending ON delay is cancelled), then the app exits after waiting 3 seconds
 
 ### 3.3 Design Intent
@@ -153,15 +155,15 @@ At TX start: GET http://<ESP32 IP address>/tx?state=on
 At TX end:   GET http://<ESP32 IP address>/tx?state=off
 ```
 
-Since the ESP32's IP address is assigned by DHCP, both shonan-android and Shonan_Lite-RasPI5 (pi5/gui) assume that the user enters and keeps the IP on the settings screen (★automatic discovery via DDNS/mDNS, etc. is not implemented in this revision).
+Since the ESP32 uses a fixed IP address (default `192.168.0.100`, see 4.1), the user enters and keeps the same IP address on the settings screen of both shonan-android and Shonan_Lite-RasPI5 (pi5/gui). If the ESP32's IP is changed with `/config/network`, change the app settings accordingly (★automatic discovery via DDNS/mDNS, etc. is not implemented in this revision).
 
 ### 4.4 Integration on the Shonan_Lite-RasPI5 (pi5/gui) Side
 
-- Set the ESP32's IP address in the "PA_Power/PTT Controller (ESP32)" field of the settings screen (`pi5/gui/screens/settings.py`). If it is empty, no integration is performed (TX/RX operation is not affected even without a controller connected).
+- In the "PA_Power/PTT Controller (ESP32)" field of the settings screen (`pi5/gui/screens/settings.py`), turn ON "Use ESP32 W5500" and set the ESP32's IP address. When it is OFF or the address is empty, no integration is performed (the IP address is kept even when OFF; TX/RX operation is not affected even without a controller connected).
 - `TxController.start()` in `pi5/gui/backend.py` sends GET `/tx?state=on` at its beginning and `stop()` sends `/tx?state=off` at its beginning (only PTT is switched ON/OFF). The timeout is short (1.5 seconds), and even if the ESP32 is not connected or does not respond, the exception is swallowed so that TX itself is not disturbed (it is only logged).
 - There is no direct communication path between the ESP32 (MCU1) and the Pluto+. The Pi 5 (pi5/gui) sends `/save.php` (`_push_pluto_settings()`) to the Pluto+ and `/tx?state=` (`_send_ptt_request()`) to the ESP32 as independent HTTP requests; the ESP32 only handles the TX start/stop notifications from the Pi 5.
 - Separately from the PTT switching above, GPIO26 (POWER channel, idx=0) is explicitly controlled in conjunction with starting/exiting the Pi 5 app (`pi5/gui/main.py`) itself (`_send_ptt_channel_state()`, using `/ch?idx=0&state=on|off`).
-  - GPIO26 is turned ON 10 seconds after app start
+  - GPIO26 is turned ON 5 seconds after app start (also when switching to Langstone V3 and when Langstone is selected in the boot menu)
   - At app exit, GPIO26 is turned OFF first, and the app actually exits after waiting 3 seconds
   - The Pi 5's own (Raspberry Pi 5) GPIO is not used for controlling the 12 V power. Only GPIO26 on the MCU1 side is controlled over the network.
 - ★The ESP32 W5500 (this controller) is not required. GPIO21 of the Pi 5 (pin 40; GND on pin 39) is HIGH (3.3 V) while transmitting and LOW while receiving, so by buffering it with a transistor/relay driver, etc., the PA and LNA can be switched between TX and RX without the ESP32 (the same pin as Langstone V3's Tx Output; on the Shonan_Lite side it is driven with `pinctrl` by `_set_pi5_tx_gpio()` in `pi5/gui/backend.py`). When the ESP32 is also used, this controller's PTT (J6) switches at the same time. This controller is required for switching the 12 V power ON/OFF.
@@ -171,7 +173,7 @@ Since the ESP32's IP address is assigned by DHCP, both shonan-android and Shonan
 ## 5. Open Items and Future Work
 
 - ★ Integration testing with the actual 12 V power/PTT drive circuits (checking Q1/Q3/Q5 on real hardware) has not been done.
-- ★ Fixed IP addressing or mDNS support (such as `http://shonan-ptt.local/`) is not implemented. To be considered if needed in operation.
+- ★ Automatic discovery via mDNS (such as `http://shonan-ptt.local/`) is not implemented (the IP address uses the fixed-IP method and is entered manually in the app). To be considered if needed in operation.
 - ★ Sending HTTP requests from the shonan-android app is outside the scope of this sketch. It must be added to the app's transmit button handler.
 - Writing to the actual ESP32 is complete (2026-08-30, MAC: `70:4b:ca:7b:eb:94`). However, the integration test with the W5500 and the 12 V power/PTT drive circuits actually connected, and the communication check with the Pi 5 (pi5/gui) side, have not been done.
 - GPIO25 (former LNA) remains physically unconnected. If LNA control becomes necessary in the future, a drive circuit must be added and the sketch and this document revised again.

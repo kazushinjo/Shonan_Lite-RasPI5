@@ -58,7 +58,7 @@ p.paragraph_format.space_before = Pt(24)
 p.add_run(
     "対象: pi5/scripts/install.sh\n"
     "新規Pi5への一括セットアップ手順(README.md相当)\n"
-    "版: 2026-08-15"
+    "版: 2026-09-30"
 ).font.size = Pt(11)
 d.add_page_break()
 
@@ -173,21 +173,29 @@ add_numbered([
 d.add_heading("1. install.shの実行", level=1)
 add_para("SSH接続したPi5上で:")
 add_code_block([
-    "git clone https://github.com/kazushinjo/Shonan_Lite-pi5.git",
-    "cd Shonan_Lite-pi5",
-    "./pi5/scripts/install.sh          # HTTPSでclone(既定)",
+    "git clone https://github.com/kazushinjo/Shonan_Lite-RasPI5.git",
+    "cd Shonan_Lite-RasPI5",
+    "./pi5/scripts/install.sh          # HTTPSでclone(既定。publicなので認証不要)",
     "# ./pi5/scripts/install_ssh.sh    # GitHubにSSH鍵を登録済みならこちらでも可",
+    "# ./pi5/scripts/install_local.sh  # 既にあるローカルクローンから展開する場合",
 ])
 add_para(
-    "日本語入力ビルド・受信(RX)用GNU Radio/gr-dvbs2rxビルドはそれぞれ省略して"
-    "時間短縮できる(RX用を省略すると受信機能は使えなくなる):"
+    "日本語入力ビルド・受信(RX)用GNU Radio/gr-dvbs2rxビルド・Langstone V3ビルドは"
+    "それぞれ省略して時間短縮できる(省略した機能は使えなくなる):"
 )
 add_code_block([
-    "SKIP_JA_KEYBOARD=1 SKIP_GNURADIO_BUILD=1 ./pi5/scripts/install.sh",
+    "SKIP_JA_KEYBOARD=1 SKIP_GNURADIO_BUILD=1 SKIP_LANGSTONE_BUILD=1 ./pi5/scripts/install.sh",
 ])
 add_para(
-    "完了後、shonan-gui.serviceがsystemdに登録されGUIが自動起動する。あわせて"
-    "/boot/firmware/config.txtへavoid_warnings=1(電源電圧警告アイコンの表示抑制)"
+    "PC側からpi5/scripts/deploy_to_pi5.shを実行すると、PC上の作業フォルダーを"
+    "Pi5へ転送してinstall_local.shを実行できる(SSHのパスワード入力は最初の1回だけ)。"
+)
+add_para(
+    "処理は0/9〜9/9の10段階(前提条件の確認、ソース取得、依存パッケージ、日本語入力、"
+    "受信用GNU Radio、Langstone V3、起動時コンソール表示の抑制、sudoers設定、"
+    "電源電圧警告の抑制、systemdサービス登録)。完了後は起動メニュー"
+    "(shonan-boot-menu.service)が自動起動し、Shonan_LiteかLangstone V3を選んで起動する。"
+    "あわせて/boot/firmware/config.txtへavoid_warnings=1(電源電圧警告アイコンの表示抑制)"
     "を未設定なら自動で追記する(反映には再起動が必要)。"
 )
 
@@ -195,14 +203,14 @@ d.add_heading("実行条件(前提条件)", level=1)
 add_para("一般ユーザーが実行してinstall.shが正常完了するには、以下が必要。")
 add_bullets([
     "Raspberry Pi OS 64bit(aarch64)であること(32bit版不可)",
-    "gitが事前にインストール済みであること",
     "GitHub/apt配布ミラーへのインターネット到達性",
     "sudoが使える対話的な実行(パスワード入力に応答できるtty)",
     "patchコマンドが使えること",
 ])
 add_para(
-    "詳細な各手順の解説・トラブルシュートはpi5/docs/install_script_guide.mdを"
-    "参照。"
+    "gitが無い場合は0/9で自動導入する。リポジトリはpublicのためGitHubの認証は不要。"
+    "詳細な各手順の解説・トラブルシュートはpi5/docs/install_script_guide.md"
+    "(英語版: install_script_guide_en.md)を参照。"
 )
 
 d.add_heading("関連ドキュメント", level=1)

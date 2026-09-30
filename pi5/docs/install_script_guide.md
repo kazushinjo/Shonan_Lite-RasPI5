@@ -2,7 +2,8 @@
 
 英語版 / English version: [`install_script_guide_en.md`](install_script_guide_en.md)
 
-`install.sh`は、まっさらなRaspberry Pi OS(Debian trixie系)にshonan-pi5一式を
+`install.sh`は、まっさらなRaspberry Pi OS(Debian trixie系)にshonan-pi5一式
+(Shonan_Lite本体・受信用GNU Radio・Langstone V3・起動メニュー)を
 セットアップするための単一スクリプトである。本ドキュメントは各処理の内容と、
 なぜその手順が必要かを詳しく説明する。手順そのものの一次情報は
 `docs/qtvirtualkeyboard_ja_build.md`(Qt Virtual Keyboardのビルド部分)も参照。
@@ -23,30 +24,33 @@
 1. **Raspberry Pi OS 64bit(aarch64)であること** — スクリプト内でQtライブラリの
    差し替え先を`/usr/lib/aarch64-linux-gnu/`に決め打ちしているため、32bit
    (armhf)版OSでは動作しない。
-2. **`git`** — 1/9のソース取得(`git clone`/`git pull`)自体が`git`コマンドに
-   依存する。0/9で未導入なら`sudo apt-get install -y git`を自動実行するため、
-   事前インストールは不要になった(2026-08-20、新規OS実機での検証で追加)。
-3. **GitHubへの認証** — 本リポジトリはprivateのため、HTTPS clone
-   (`install.sh`の既定`REPO_URL`)は必ず認証エラーになる。`install_ssh.sh`
-   (SSH clone)を使うこと。実機に一度もSSH鍵を登録していない場合、0/9が
-   鍵を生成し、GitHubへの登録手順を表示してスクリプトを終了する
-   (公開鍵の登録はブラウザ操作が必要なため自動化できない)。登録後に
-   同じコマンドを再実行すれば続行する。
-4. **インターネット到達性** — GitHub(ソース取得・Qt Virtual Keyboardのclone)と
-   Debianのapt配布ミラー両方に到達できること。
-5. **sudoが使える対話的な実行** — apt/tee/systemctl等で何度も`sudo`を呼ぶため、
+2. **インターネット到達性** — GitHub(ソース取得・Qt Virtual Keyboard・gr-dvbs2rx・
+   libiioのclone)とDebianのapt配布ミラー両方に到達できること。
+   `install_local.sh`でローカルクローンから導入する場合もソース取得以外
+   (aptと各ビルド)には必要。
+3. **sudoが使える対話的な実行** — apt/tee/systemctl等で何度も`sudo`を呼ぶため、
    パスワード入力を求められた際に応答できるttyでの実行が前提(SSH経由でも
    対話ttyがあれば問題ない)。完全無人実行にしたい場合は事前に
-   `/etc/sudoers.d/`へNOPASSWDルールを用意しておく必要がある
-   (スクリプト自体はsudoers設定を変更しない)。
-6. **`patch`コマンドが使えること** — ダークテーマパッチ適用に使用する。
+   `/etc/sudoers.d/`へNOPASSWDルールを用意しておく必要がある。
+4. **`patch`コマンドが使えること** — 3/9のダークテーマパッチ適用に使用する。
    Raspberry Pi OSには通常プリインストールされているが、最小構成イメージでは
    無い場合がある。
 
+**事前導入が不要になったもの**
+
+- **`git`** — 1/9のソース取得(`git clone`/`git fetch`)自体が`git`コマンドに
+  依存するが、0/9で未導入なら`sudo apt-get install -y git`を自動実行する
+  (2026-08-20、新規OS実機での検証で追加)。
+- **GitHubの認証** — リポジトリはpublicのため、既定のHTTPS cloneで認証なしに取得できる。
+  SSHでcloneしたい場合は`install_ssh.sh`を使う(実機にSSH鍵が無ければ0/9が鍵を生成し、
+  GitHubへの登録手順を表示して一旦終了する。公開鍵の登録はブラウザ操作が必要なため
+  自動化できない。登録後に同じコマンドを再実行すれば続行する)。
+
 **時間・リソース**
 
-7. 日本語入力ビルド(既定、`SKIP_JA_KEYBOARD=1`未指定時)は実測10〜20分程度
-   かかるため、途中で通信・電源が切れない環境であること。
+5. 日本語入力ビルド(`SKIP_JA_KEYBOARD=1`未指定時)・gr-dvbs2rxビルド・Langstone V3用
+   libiioのビルドはそれぞれ数分〜20分程度かかるため、途中で通信・電源が切れない
+   環境であること。
 
 **不要な条件**
 
@@ -57,30 +61,42 @@
 ## 実行方法
 
 ```sh
-./pi5/scripts/install_ssh.sh      # SSHでclone/pull(private repoのため通常はこちら)
-./pi5/scripts/install.sh          # HTTPSでclone/pull(既定。privateなので認証エラーになる)
+./pi5/scripts/install.sh          # HTTPSでclone/fetch(既定。publicなので認証不要)
+./pi5/scripts/install_ssh.sh      # SSHでclone/fetch(GitHubにSSH鍵を登録済みの場合)
+./pi5/scripts/install_local.sh    # 既にあるローカルクローンから展開(GitHubからのソース取得なし)
 ```
 
-`install_ssh.sh`は`REPO_URL`を`git@github.com:kazushinjo/Shonan_Lite-pi5.git`に
-設定してから`install.sh`を呼び出すだけの薄いラッパーで、それ以外の処理は
-完全に同一である。
+- `install_ssh.sh`は`REPO_URL`を`git@github.com:kazushinjo/Shonan_Lite-RasPI5.git`に
+  設定してから`install.sh`を呼び出すだけの薄いラッパーで、それ以外の処理は完全に同一である。
+- `install_local.sh`は`LOCAL_SOURCE_DIR`(既定はスクリプトが置かれたクローン自身)を
+  設定して`install.sh`を呼び出す。GitHubからのソース取得の代わりに、ローカルの
+  クローンを`rsync`でインストール先へコピーする。
+- PC側から実行する`pi5/scripts/deploy_to_pi5.sh`は、PC上の作業フォルダーを
+  `tar`+`ssh`でPi5の`~/shonan-pi5-src`へ転送し、Pi5上で`install_local.sh`を実行する
+  (SSHのパスワード入力は最初の1回だけ)。
 
 環境変数で挙動を変更できる。
 
 | 変数 | 既定値 | 効果 |
 | --- | --- | --- |
-| `SHONAN_INSTALL_DIR` | `$HOME/shonan-pi5` | リポジトリのclone/pull先ディレクトリ |
+| `REPO_URL` | `https://github.com/kazushinjo/Shonan_Lite-RasPI5.git` | clone元(`install_ssh.sh`はSSHのURLに変える) |
+| `REPO_BRANCH` | `main` | clone/fetchするブランチ |
+| `SHONAN_INSTALL_DIR` | `$HOME/shonan-pi5` | リポジトリのインストール先ディレクトリ |
+| `LOCAL_SOURCE_DIR` | (未設定) | 設定するとGitHubの代わりにこのローカルクローンからコピーする(`install_local.sh`が設定する) |
 | `QTVK_BUILD_DIR` | `/tmp/qtvirtualkeyboard-src` | Qt Virtual Keyboardのビルド作業ディレクトリ |
 | `GR_DVBS2RX_BUILD_DIR` | `$HOME/gr-dvbs2rx` | gr-dvbs2rxのビルド作業ディレクトリ |
-| `SKIP_JA_KEYBOARD` | `0` | `1`にすると日本語入力ビルド(3/6)を丸ごとスキップする |
-| `SKIP_GNURADIO_BUILD` | `0` | `1`にすると受信(RX)用GNU Radio/gr-dvbs2rxビルド(4/6)を丸ごとスキップする(受信機能は動作しなくなる) |
+| `LANGSTONE_INSTALL_DIR` | `$HOME/Langstone` | Langstone V3の配置先 |
+| `LANGSTONE_LIBIIO_PREFIX` | `/opt/langstone-libiio` | Langstone V3専用libiioのインストール先 |
+| `SKIP_JA_KEYBOARD` | `0` | `1`にすると日本語入力ビルド(3/9)を丸ごとスキップする |
+| `SKIP_GNURADIO_BUILD` | `0` | `1`にすると受信(RX)用GNU Radio/gr-dvbs2rxビルド(4/9)を丸ごとスキップする(受信機能は動作しなくなる) |
+| `SKIP_LANGSTONE_BUILD` | `0` | `1`にするとLangstone V3のビルド(5/9)と`langstone.service`の作成をスキップする(Home画面のLangstoneは動作しなくなる) |
 
 `set -euo pipefail`が先頭にあるため、いずれかのコマンドが失敗した時点でスクリプトは
 即座に停止する(中途半端な状態のまま先へ進まない)。
 
 ---
 
-## 0/6 Raspberry Pi OSのインストール
+## 事前準備: Raspberry Pi OSのインストール
 
 `install.sh`実行対象のPi5に、あらかじめRaspberry Pi OSをインストールしておく
 必要がある(このインストール自体は`install.sh`の範囲外)。
@@ -112,34 +128,53 @@
 8. PCから`ssh <ユーザー名>@<ホスト名>.local`(またはPi5に割り当てられた
    IPアドレス)で接続できることを確認する。
 
-以降の手順(1/6〜6/6)は、この時点でSSH接続できているPi5上で実行する。
+以降の手順(0/9〜9/9)は、この時点でSSH接続できているPi5上で実行する。
 
-## 1/6 ソース取得
+## 0/9 前提条件の確認
+
+- `LOCAL_SOURCE_DIR`指定時(`install_local.sh`)は、GitHubへアクセスしないため
+  このチェックを省略し、`rsync`が無ければ導入するだけにする。
+- それ以外で`git`が無ければ`sudo apt-get install -y git`で導入する。
+- `REPO_URL`がSSH(`git@...`、`install_ssh.sh`)の場合は、`~/.ssh/id_ed25519`が無ければ
+  生成し、`ssh -T git@github.com`で認証を確認する。認証できなければ公開鍵と登録先
+  (https://github.com/settings/ssh/new)を表示して終了する。
+  - ★GitHubはshellアクセスを許可しないため、認証に成功してもsshは必ず終了コード1を返す。
+    `set -o pipefail`下でパイプに直接つなぐと誤判定するため、出力を変数で受けてから
+    "successfully authenticated"の有無で判定している(実機で確認した不具合の対策)。
+- `REPO_URL`がHTTPS(既定)の場合は、`git ls-remote`でアクセスできるかを確認する。
+  リポジトリはpublicのため通常はそのまま進む(アクセスできない場合のみSSH版への切替を案内して終了する)。
+
+## 1/9 ソース取得
 
 ```sh
 if [ -d "$INSTALL_DIR/.git" ]; then
-  git -C "$INSTALL_DIR" pull --ff-only
+  git -C "$INSTALL_DIR" fetch origin "$REPO_BRANCH"
+  git -C "$INSTALL_DIR" checkout -B "$REPO_BRANCH" "origin/$REPO_BRANCH"
+  git -C "$INSTALL_DIR" reset --hard "origin/$REPO_BRANCH"
 else
-  git clone "$REPO_URL" "$INSTALL_DIR"
+  git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR"
 fi
 ```
 
 - `$INSTALL_DIR/.git`が既に存在するか(＝既にcloneされているか)で分岐する。
-  - 存在しない場合: GitHub(`kazushinjo/Shonan_Lite-pi5`)から新規clone。これにより、
-    このスクリプト単体を(まだリポジトリを持っていない)新品のPi5へ`curl`等で
-    転送して実行するだけでセットアップを開始できる。
-  - 存在する場合: `git pull --ff-only`で最新化する。`--ff-only`はfast-forward
-    できない(ローカルに独自コミットがある等の)場合にエラーで止まり、意図せず
-    ローカルの変更を上書き・マージしてしまうことを防ぐ安全策。
+  - 存在しない場合: GitHub(`kazushinjo/Shonan_Lite-RasPI5`)から`REPO_BRANCH`だけを新規clone。
+    これにより、このスクリプト単体を新品のPi5へ`curl`等で転送して実行するだけで
+    セットアップを開始できる。
+  - 存在する場合: `fetch`してから`reset --hard`で**リモートの内容に正確に合わせる**。
+    `install.sh`は配備用スクリプトのため、Pi5上で直接書き換えたファイル等の
+    ローカル変更は残さない(残したい変更がある場合は事前に退避すること)。
+- `LOCAL_SOURCE_DIR`指定時は、そのディレクトリに`pi5/`があることを確認し、
+  `rsync -a --delete --exclude='.git'`でインストール先へコピーする(インストール先に
+  しか無いファイルは削除される)。
 
-## 2/6 実行時依存パッケージ
+## 2/9 実行時依存パッケージ
 
 GUI本体(`pi5/gui/main.py`)を動かすために必要な、Debianパッケージ一式を`apt`で
 導入する。
 
 | パッケージ | 用途 |
 | --- | --- |
-| `git`, `curl` | ソース取得・HTTP通信(Pluto+への設定送信等)に使用 |
+| `git`, `curl` | ソース取得・HTTP通信に使用 |
 | `python3-pyqt5` | GUI本体のQtバインディング |
 | `python3-pyqt5.qtquick` | `QQuickWidget`(オンスクリーンキーボードの埋め込みに使用) |
 | `python3-pyqt5.sip` | PyQt5の内部依存 |
@@ -147,19 +182,22 @@ GUI本体(`pi5/gui/main.py`)を動かすために必要な、Debianパッケー�
 | `ffmpeg` | 映像/音声のエンコード・多重化・オーバーレイ合成・受信映像デコード全般 |
 | `v4l-utils` | USBカメラの解像度・フォーマット確認(`v4l2-ctl`) |
 | `alsa-utils` | 音声デバイス列挙・音量調整(`aplay`/`arecord`/`amixer`) |
-| `sshpass` | Home画面の「Pluto再起動」ボタンがPluto+へパスワード付きSSHするために使用 |
+| `libiio-utils` | `iio_attr`等。RSSI測定・送信LOの復元などPlutoの属性の読み書きに使用 |
+| `sshpass` | Plutoの再起動(アプリ起動時・「アプリ再起動」等)でPluto+へパスワード付きSSHするために使用 |
 | `fonts-droid-fallback` | オーバーレイの日本語グリフ描画用フォント(DroidSansFallbackFull) |
 | `fonts-dejavu-core` | オーバーレイの英数字グリフ描画用フォント(DejaVuSans-Bold) |
-| `qtvirtualkeyboard-plugin`, `qml-module-qtquick-virtualkeyboard` | オンスクリーンキーボード本体(apt版。3/6で日本語対応版に差し替える) |
+| `qtvirtualkeyboard-plugin`, `qml-module-qtquick-virtualkeyboard` | オンスクリーンキーボード本体(apt版。3/9で日本語対応版に差し替える) |
 | `qml-module-qt-labs-folderlistmodel`, `qml-module-qtquick-window2`, `qml-module-qtquick-layouts`, `qml-module-qtquick-controls2`, `qml-module-qtquick2` | オンスクリーンキーボードのQML実装が依存する補助モジュール群(不足しているとキーボードパネルのQML読み込みに失敗する) |
 
-★`SKIP_JA_KEYBOARD=1`でも2/6は必ず実行される(英語キーボード自体はここで
+あわせて`usermod -aG video,audio`で、実行ユーザーをカメラ・マイク用のグループに加える。
+
+★`SKIP_JA_KEYBOARD=1`でも2/9は必ず実行される(英語キーボード自体はここで
 入るapt版で動作するため)。
 
-## 3/6 日本語入力(OpenWnn)対応版Qt Virtual Keyboardのビルド
+## 3/9 日本語入力(OpenWnn)対応版Qt Virtual Keyboardのビルド
 
 `SKIP_JA_KEYBOARD=1`の場合はこのブロック全体をスキップし、「英語配列のみ利用可」
-というメッセージだけ表示して5/6へ進む。
+というメッセージだけ表示して4/9へ進む。
 
 ### なぜソースからビルドする必要があるのか
 
@@ -283,7 +321,7 @@ sudo cp -a "$QT5_LIB_DIR"/libQt5VirtualKeyboard.so* "$BACKUP_DIR/" 2>/dev/null |
 ...
 ```
 
-差し替え前に、2/6でaptインストールされた既存ファイル一式を
+差し替え前に、2/9でaptインストールされた既存ファイル一式を
 `~/qtvk_backup_<タイムスタンプ>/`へコピーしておく。`|| true`が付いているのは、
 (通常発生しないはずだが)コピー元ファイルが万一存在しない場合でも
 `set -e`によってスクリプト全体が止まらないようにするため。
@@ -323,13 +361,13 @@ sudo systemctl restart shonan-gui.service
 qml-module-qtquick-virtualkeyboard libqt5virtualkeyboard5`でもapt版へ戻せる
 (この場合は日本語入力ができなくなる)。
 
-## 4/6 受信(RX)用GNU Radio + gr-dvbs2rxの導入
+## 4/9 受信(RX)用GNU Radio + gr-dvbs2rxの導入
 
 `SKIP_GNURADIO_BUILD=1`の場合はこのブロック全体をスキップする(受信機能は動作しない)。
 
 ```sh
 sudo apt-get install -y gnuradio gnuradio-dev cmake pkg-config
-git clone https://github.com/igorauad/gr-dvbs2rx.git "$GR_DVBS2RX_BUILD_DIR"
+git clone https://github.com/igorauad/gr-dvbs2rx.git "$GR_DVBS2RX_BUILD_DIR"   # 既にあればpull --ff-only
 git -C "$GR_DVBS2RX_BUILD_DIR" submodule update --init --recursive
 git -C "$GR_DVBS2RX_BUILD_DIR" apply "$RX_PATCH"   # 存在し未適用の場合のみ
 cmake .. -DCMAKE_BUILD_TYPE=Release && make -j"$(nproc)" && sudo make install
@@ -348,7 +386,46 @@ Debianのaptで導入できるが、`dvbs2rx`(DVB-S2復調のOOT module、
 `ImportError: cannot import name 'dvbs2rx'`で受信が失敗する(実機の新規インストール
 で発見・修正)。
 
-## 5/6 電源電圧警告(稲妻アイコン)表示の抑制
+## 5/9 Langstone V3(SDRトランシーバー)のビルド
+
+`SKIP_LANGSTONE_BUILD=1`の場合はこのブロック全体をスキップする。
+
+- Langstone V3(`pi5/third_party/Langstone-V3`、g4eml/Langstone-V3に改造を加えたもの。
+  改造内容は`pi5/docs/patches/langstone_v3_shonan_lite.patch`)は新しめのlibiio APIを要求するが、
+  apt版libiio(gnuradio/gr-iioが依存)は旧APIのため、同じ`/usr`配下に混在させると
+  互いのヘッダ・共有ライブラリを上書きして双方が壊れる(実機で確認済みの事故)。
+  そのため**Langstone専用のlibiioを`/opt/langstone-libiio`へ隔離ビルド**し、
+  コンパイル時に`-I`/`-L`/RPATHで明示的にそちらだけを参照させる。
+- ビルド用に`libusb-1.0-0-dev libavahi-client-dev libxml2-dev bison flex libaio-dev
+  libzstd-dev liblgpio-dev libfreetype-dev`を導入する(`libfreetype-dev`は大きな
+  周波数表示をTTFフォントで描画するため、`liblgpio-dev`はPTT入力・TX出力等のGPIO用)。
+- `pi5/third_party/Langstone-V3/`を`~/Langstone`へコピーし、`GUI_Pluto`と
+  `Screen_Message`をビルドする。
+- ★`~/Langstone`は丸ごと上書きされる。Langstoneの設定ファイル
+  (`~/Langstone/Langstone_Pluto.conf`)はLangstoneが終了時に書き出すもので、
+  リポジトリには含まれないため上書きされない。
+
+## 6/9 起動時コンソール表示の抑制
+
+素のRaspberry Pi OSのままだと、Pi5の起動時にカーネルの起動ログやログインプロンプトが
+実機LCDに一瞬映り込む(実機で確認)。`getty@tty1`を無効化し、
+`/boot/firmware/cmdline.txt`に`quiet loglevel=3 logo.nologo vt.global_cursor_default=0`
+を追記する(既に`quiet`があれば何もしない。反映には再起動が必要)。
+
+## 7/9 reboot/shutdown/起動アプリ切替のパスワード無し実行を許可
+
+Home画面の「電源オフ」、起動メニューでのアプリ選択、Shonan_Lite⇔Langstoneの切替は、
+TTYの無いsystemdサービスから`sudo`を実行する。標準のsudo設定ではパスワード入力を
+求められてPAM会話が成立せず(`pam_unix: conversation failed`)、処理が実行されない
+不具合を実機で確認した。そこで`/etc/sudoers.d/shonan-pi5-reboot`に、実行ユーザーが
+次のコマンドだけをパスワード無しで実行できるルールを書き込み、`visudo -c`で検証する。
+
+- `/sbin/reboot`、`/sbin/shutdown`、`/usr/sbin/poweroff`
+- `/bin/systemctl start --no-block shonan-gui.service`
+- `/bin/systemctl start --no-block langstone.service`
+- `/bin/systemctl stop shonan-display-off.service`
+
+## 8/9 電源電圧警告(稲妻アイコン)表示の抑制
 
 ```sh
 if [ -f "$BOOT_CONFIG" ] && ! grep -q '^avoid_warnings=' "$BOOT_CONFIG"; then
@@ -362,68 +439,66 @@ fi
 (恒久対策は正規の27W USB-C PD電源・良質なUSBケーブルの使用。
 `vcgencmd get_throttled`で実際のスロットリング有無を確認できる)。
 
-## 6/6 systemdサービス登録
+## 9/9 systemdサービス登録
 
-```sh
-sudo tee "$SERVICE_FILE" > /dev/null <<EOF
-[Unit]
-Description=Shonan Pi5 Touch GUI
-...
-User=${USER}
-WorkingDirectory=${GUI_DIR}
-Environment=QT_QPA_PLATFORM=eglfs
-ExecStart=/usr/bin/python3 ${GUI_DIR}/main.py
-Restart=on-failure
-RestartSec=3
-...
-EOF
-```
+次の4つのサービスを`/etc/systemd/system/`に作成する(`sudo tee`を使うのは、
+リダイレクト`>`自体は`sudo`の権限を引き継がないため)。
 
-`/etc/systemd/system/shonan-gui.service`をヒアドキュメントで生成する
-(`sudo tee`を使うのは、リダイレクト`>`自体は`sudo`の権限を引き継がない
-ため。`sudo bash -c "... > file"`と同様の目的)。
+| サービス | 内容 | 自動起動 |
+| --- | --- | --- |
+| `shonan-boot-menu.service` | 起動時に「Shonan_Lite / Langstone V3」を選ぶ全画面メニュー(`pi5/gui/boot_menu.py`)。選んだ側のサービスを`systemctl start`で起動する | 有効 |
+| `shonan-gui.service` | Shonan_Lite本体(`pi5/gui/main.py`、`QT_QPA_PLATFORM=eglfs`)。異常終了時は3秒後に再起動 | 無効(起動メニューから起動) |
+| `langstone.service` | Langstone V3(`~/Langstone/run_pluto`)。`SKIP_LANGSTONE_BUILD=1`なら作らない | 無効(起動メニュー・切替から起動) |
+| `shonan-display-off.service` | シャットダウン時にDSI画面を消灯する(`pi5/systemd/shonan-display-off.service`) | 有効 |
 
-- `User=${USER}`: スクリプトを実行したユーザー名をそのまま使う(決め打ちで
-  `pi`等にしていない)。
-- `Environment=QT_QPA_PLATFORM=eglfs`: X11/Waylandなしで、Pi5のDSI接続LCDへ
-  直接描画するQtプラットフォームプラグインを指定する。
-- `Restart=on-failure` / `RestartSec=3`: GUIプロセスが異常終了した場合、
-  3秒後に自動再起動する。
+- `shonan-gui.service`・`langstone.service`・`shonan-boot-menu.service`は`Conflicts=`で
+  互いに排他制御される。LCD(DRM/KMS)は1つのプロセスしか使えないため、どれか1つを
+  `systemctl start`すると他は自動的に停止する。アプリの切替はこの仕組みで行い、Pi5自体は
+  再起動しない。
+- マーカーファイル`~/.pi5_boot_mode_langstone`の有無を`ConditionPathExists`で見て、
+  起動すべきでない側は何もせず正常終了(skipped)扱いになる。
+- `langstone.service`は`Environment=HOME=...`を実際の値で埋め込み、`run_pluto`を
+  `/bin/bash`経由で起動する(systemdは`User=`だけでは`$HOME`を設定せず、`%h`は
+  rootのホームに解決される場合があること、`run_pluto`の先頭行がシェバングでないことへの対策。
+  いずれも実機で確認)。
+- 最後に`daemon-reload`し、稼働中の`shonan-gui.service`/`langstone.service`を明示的に
+  `stop`してから(稼働中のまま起動メニューを起動するとLCDを掴めず描画に失敗するため)、
+  `shonan-boot-menu.service`と`shonan-display-off.service`を`enable`・`restart`する。
 
-続けて`daemon-reload`(新規/変更されたユニットファイルをsystemdに認識させる)
-→`enable`(次回起動時の自動起動を有効化)→`restart`(今すぐ反映)を実行する。
+## インストール内容の検証
+
+完了前に次を確認し、1つでも欠けていればエラーで終了する。
+
+- 必須ファイル(`main.py`・`backend.py`・`boot_menu.py`・主要画面・QML・テストパターン画像)があること
+- 必須コマンド(`ffmpeg`・`v4l2-ctl`・`arecord`・`iio_attr`・`sshpass`)があること
+- PyQt5(`QtCore`・`QtQuickWidgets`・`QtWidgets`)をimportできること、GUIのPythonファイルが構文エラーなくコンパイルできること
+- `shonan-boot-menu.service`が起動していること
 
 ## 完了後の表示
 
-```sh
-sudo systemctl status "$SERVICE_NAME" --no-pager || true
-```
+`shonan-boot-menu.service`の状態を表示し、続けて次の注意書きを表示する。
 
-でサービスの起動状態を表示する(失敗してもスクリプト自体は正常終了として
-扱うよう`|| true`を付けている、ステータス表示はあくまで確認用のため)。
-
-続けて次の2点を注意書きとして表示する。
-
-1. **パスワードなしsudo/sshの前提**: Home画面の「Pluto再起動」ボタン
-   (`sshpass`でPluto+へSSH)、設定画面の「システム日時」設定
-   (`timedatectl`)、および開発時に使う`kmsgrab`による実機画面キャプチャ等は、
-   `sudo`をパスワードなしで実行できることを前提にしている。このスクリプトは
-   `/etc/sudoers.d/`への変更は一切行わない(セキュリティに関わる設定を
-   スクリプトが無断で行うべきではないため)。必要であれば運用者が判断して
-   個別に設定する。
+1. **パスワードなしsudo/sshの前提**: 設定画面の「システム日時」設定(`timedatectl`)や、
+   開発時に使う`kmsgrab`による実機画面キャプチャ等は、`sudo`をパスワードなしで
+   実行できることを前提にしている。7/9で許可するのは上記のコマンドだけで、それ以外の
+   `/etc/sudoers.d/`への変更は行わない(セキュリティに関わる設定をスクリプトが無断で
+   行うべきではないため)。必要であれば運用者が判断して個別に設定する。
 2. **日本語入力の既定言語**: オンスクリーンキーボードは起動直後は英語配列で、
    globeアイコンをタップすることで日本語(ローマ字入力)へ切り替えられる
    (自動では切り替わらない、既知の仕様)。
+3. **avoid_warnings**: 8/9で新規に追記した場合、反映には`sudo reboot`が必要。
 
 ## 関連ドキュメント
 
-- `pi5/docs/qtvirtualkeyboard_ja_build.md` — 3/6のビルド手順の一次情報、
+- `pi5/docs/qtvirtualkeyboard_ja_build.md` — 3/9のビルド手順の一次情報、
   実機で遭遇したハマりどころの詳細
 - `pi5/docs/patches/qtvirtualkeyboard_style_dark_language_popup.patch` —
-  3/6で適用されるダークテーマパッチの実体(unified diff形式、`git diff`相当)
+  3/9で適用されるダークテーマパッチの実体(unified diff形式、`git diff`相当)
+- `pi5/docs/patches/gr-dvbs2rx_pi5_bringup.patch` — 4/9で適用される受信安定化
+  パッチの実体
+- `pi5/docs/patches/langstone_v3_shonan_lite.patch` — 5/9でビルドするLangstone V3への改造内容
+  (g4eml/Langstone-V3との差分)
 - `pi5/docs/shonan_pi5_operation_manual.docx` / `pi5/gui/manual_content.py` —
   GUIの操作方法そのもの(インストール後の使い方)
-- `pi5/docs/patches/gr-dvbs2rx_pi5_bringup.patch` — 4/6で適用される受信安定化
-  パッチの実体
 - `pi5/third_party/rpi-dvbs2-receiver-gui/` — GNU Radio/gr-dvbs2rx受信フロー
   グラフの参考実装(kazushinjo/rpi-dvbs2-receiver-guiより取り込み)
