@@ -85,27 +85,28 @@ class VideoSourceScreen(SettingsSubScreen):
                          enabled=True, checked=(current_source == "colorbar"))
         # 送信映像のコーデック。H.265は同じビットレートで画質が上がるが、Pi5のCPU負荷が大きい。
         # 受信側(Pi5/Pi4/Windows)はTSから自動判別するため、受信の設定は不要。
-        codec_title = QtWidgets.QLabel(tr("映像コーデック", "Video Codec"))
+        # 送信解像度は、H.265の1080pでCPUが追いつかない場合や低ビットレートで画質を優先したい
+        # 場合に720pを選ぶ。合成はフルHDのまま行うため文字の見た目の比率は変わらない。
+        # ★800x480画面に収まるよう、見出し1行+コンボ2つの横並び1行に抑える(縦に並べると
+        # 下の備考行が画面外へはみ出した)。
+        codec_title = QtWidgets.QLabel(tr("コーデック / 解像度", "Codec / Resolution"))
         codec_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
-        left_layout.addSpacing(6)
         left_layout.addWidget(codec_title)
+        codec_row = QtWidgets.QHBoxLayout()
+        codec_row.setSpacing(6)
         self.codec_combo = QtWidgets.QComboBox()
-        self.codec_combo.setMinimumHeight(32)
-        for label, codec in (("H.264", "h264"), ("H.265 (HEVC)", "h265")):
+        self.codec_combo.setFixedHeight(30)
+        for label, codec in (("H.264", "h264"), ("H.265", "h265")):
             self.codec_combo.addItem(label, codec)
         self.codec_combo.activated.connect(self._save_video_codec)
-        left_layout.addWidget(self.codec_combo)
-        # 送信解像度。H.265の1080pでCPUが追いつかない場合や、低ビットレートで画質を
-        # 優先したい場合に720pを選ぶ。合成はフルHDのまま行うため文字の見た目の比率は変わらない。
-        resolution_title = QtWidgets.QLabel(tr("送信解像度", "TX Resolution"))
-        resolution_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
-        left_layout.addWidget(resolution_title)
+        codec_row.addWidget(self.codec_combo, 1)
         self.resolution_combo = QtWidgets.QComboBox()
-        self.resolution_combo.setMinimumHeight(32)
-        for label, height in (("1080p (1920x1080)", 1080), ("720p (1280x720)", 720)):
+        self.resolution_combo.setFixedHeight(30)
+        for label, height in (("1080p", 1080), ("720p", 720)):
             self.resolution_combo.addItem(label, height)
         self.resolution_combo.activated.connect(self._save_tx_video_height)
-        left_layout.addWidget(self.resolution_combo)
+        codec_row.addWidget(self.resolution_combo, 1)
+        left_layout.addLayout(codec_row)
         self._load_video_codec()
         left_layout.addStretch(1)
         # カメラ映像を静止画(JPG)として撮影・保存する。保存した画像は「ファイル選択」で
