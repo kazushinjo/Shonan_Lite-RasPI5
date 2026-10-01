@@ -13,13 +13,16 @@ from i18n import set_language, tr
 from widgets import SettingsSubScreen, confirm_dialog, error_dialog
 
 
+# 入力欄・チェックボックス・ボタンの高さ。1画面に収めるため他画面(48px)より詰める。
+_FIELD_HEIGHT = 38
+
+
 class SettingsScreen(SettingsSubScreen):
     def __init__(self, main_window):
         super().__init__("設定 / Config", lambda: main_window.navigate_to("home"))
         self.main_window = main_window
 
-        # Mac版設定画面を参考にした中央パネル。800x480のPi5画面では、
-        # スクロール可能なダークパネルとしてタッチ操作に合わせる。
+        # Mac版設定画面を参考にした中央パネル。800x480のPi5画面に1画面で収める。
         content_layout = self.body_layout
         content_layout.setContentsMargins(14, 8, 14, 14)
         content_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
@@ -34,19 +37,29 @@ class SettingsScreen(SettingsSubScreen):
             "QFrame#settingsPanel QComboBox, QLineEdit, QDateTimeEdit {"
             " background-color: #202427; color: #eeeeee;"
             " border: 1px solid #42494d; border-radius: 8px; padding: 8px; }"
-            "QFrame#settingsPanel QCheckBox { color: #eeeeee; }"
+            "QFrame#settingsPanel QCheckBox { color: #eeeeee; min-height: 0px; }"
+            # ★SettingsSubScreen共通のmin-height(入力欄42px/チェック52px)が_FIELD_HEIGHTより
+            # 優先され1画面に収まらなかったため、このパネル内だけ打ち消す。
+            "QFrame#settingsPanel QLineEdit, QFrame#settingsPanel QDateTimeEdit {"
+            " min-height: 0px; padding: 4px 8px; }"
             "QFrame#settingsPanel QPushButton { border-radius: 8px; }"
         )
         content_layout.addWidget(panel)
-        self.body_layout = QtWidgets.QVBoxLayout(panel)
-        self.body_layout.setContentsMargins(20, 14, 20, 14)
-        self.body_layout.setSpacing(10)
+        # ★800x480画面でスクロールせず1画面に収まるよう、左右2列に分けて各欄の高さを詰める
+        # (以前は1列で縦に長く、ESP32以降がスクロールしないと見えなかった)。
+        # 左列: 表示言語・送信先・システム日時、右列: ESP32・オンデバイス復調・受信診断。
+        columns = QtWidgets.QHBoxLayout(panel)
+        columns.setContentsMargins(18, 8, 18, 10)
+        columns.setSpacing(24)
+        left = QtWidgets.QVBoxLayout()
+        left.setSpacing(4)
+        right = QtWidgets.QVBoxLayout()
+        right.setSpacing(4)
+        columns.addLayout(left, 1)
+        columns.addLayout(right, 1)
+        self.body_layout = left
 
-        heading = QtWidgets.QLabel(tr("設定", "Settings"))
-        heading.setStyleSheet("font-size: 21px; font-weight: bold; color: white;")
-        self.body_layout.addWidget(heading)
-
-        self.body_layout.addWidget(self._section_label(tr("表示言語", "Display Language")))
+        left.addWidget(self._section_label(tr("表示言語", "Display Language")))
         lang_layout = QtWidgets.QHBoxLayout()
         lang_layout.setSpacing(0)
         lang_group = QtWidgets.QButtonGroup(self)
@@ -59,13 +72,13 @@ class SettingsScreen(SettingsSubScreen):
         lang_layout.addWidget(self.ja_lang_btn)
         lang_layout.addWidget(self.en_lang_btn)
         lang_layout.addStretch(1)
-        self.body_layout.addLayout(lang_layout)
+        left.addLayout(lang_layout)
 
         # ★バンドプロファイルUIは非表示化(要望により)。settings.selected_bandの
         # 保存値・読み込み・変更ロジック自体は維持し、ウィジェットのみ隠す。
         self.band_section_label = self._section_label("バンドプロファイル / Band Profile")
         self.band_section_label.setVisible(False)
-        self.body_layout.addWidget(self.band_section_label)
+        left.addWidget(self.band_section_label)
         self.band_combo = QtWidgets.QComboBox()
         self.band_combo.setMinimumHeight(48)
         for band, info in BAND_PROFILES.items():
@@ -74,7 +87,7 @@ class SettingsScreen(SettingsSubScreen):
             self.band_combo.addItem(f"{info['label_ja']} / {info['label_en']}", band)
         self.band_combo.currentIndexChanged.connect(self._on_band_combo_changed)
         self.band_combo.setVisible(False)
-        self.body_layout.addWidget(self.band_combo)
+        left.addWidget(self.band_combo)
 
         # ★推奨Wi-Fi帯・目安ビットレート表示は非表示化(要望により)。値の更新
         # ロジック自体は維持し、ウィジェットのみ隠す。
@@ -85,75 +98,80 @@ class SettingsScreen(SettingsSubScreen):
         self.wifi_label.setVisible(False)
         self.wifi_reason_label.setVisible(False)
         self.bitrate_label.setVisible(False)
-        self.body_layout.addWidget(self.wifi_label)
-        self.body_layout.addWidget(self.wifi_reason_label)
-        self.body_layout.addWidget(self.bitrate_label)
+        left.addWidget(self.wifi_label)
+        left.addWidget(self.wifi_reason_label)
+        left.addWidget(self.bitrate_label)
 
-        self.body_layout.addWidget(self._section_label(tr("送信先 (Pluto Tx)", "Destination (Pluto Tx)")))
+        left.addWidget(self._section_label(tr("送信先 (Pluto Tx)", "Destination (Pluto Tx)")))
         self.pluto_ip_edit = QtWidgets.QLineEdit()
-        self.pluto_ip_edit.setMinimumHeight(48)
+        self.pluto_ip_edit.setFixedHeight(_FIELD_HEIGHT)
         self.pluto_ip_edit.setPlaceholderText("192.168.0.136")
         self.pluto_ip_edit.editingFinished.connect(self._save_pluto_ip)
-        self.body_layout.addWidget(self.pluto_ip_edit)
+        left.addWidget(self.pluto_ip_edit)
         self.pluto_udp_port_label = QtWidgets.QLabel(
             tr("UDP-TSポート: 8282（Pluto側固定）", "UDP-TS port: 8282 (fixed on Pluto)"))
-        self.pluto_udp_port_label.setStyleSheet("color: #cccccc;")
-        self.body_layout.addWidget(self.pluto_udp_port_label)
-
-        self.body_layout.addWidget(self._section_label(
-            tr("PA_Power/PTTコントローラ (ESP32)", "PA_Power/PTT Controller (ESP32)")))
-        self.use_ptt_controller_checkbox = QtWidgets.QCheckBox(
-            tr("ESP32 W5500を使用する", "Use ESP32 W5500"))
-        self.use_ptt_controller_checkbox.setMinimumHeight(48)
-        self.use_ptt_controller_checkbox.toggled.connect(self._on_use_ptt_controller_toggled)
-        self.body_layout.addWidget(self.use_ptt_controller_checkbox)
-        self.ptt_controller_ip_edit = QtWidgets.QLineEdit()
-        self.ptt_controller_ip_edit.setMinimumHeight(48)
-        self.ptt_controller_ip_edit.setPlaceholderText(tr("未使用の場合は空欄のまま", "Leave empty if not used"))
-        self.ptt_controller_ip_edit.editingFinished.connect(self._save_ptt_controller_ip)
-        self.body_layout.addWidget(self.ptt_controller_ip_edit)
-        ptt_note = QtWidgets.QLabel(tr(
-            "hardware/W5500_PA_PTT_Control のESP32+W5500ボードのIPアドレス。"
-            "送信開始/終了に連動してPTTを、アプリ起動/終了に連動して12V電源を自動切替します。"
-            "「使用する」がOFFまたは空欄なら連携しません。",
-            "IP address of the ESP32 + W5500 board (hardware/W5500_PA_PTT_Control). "
-            "PTT follows TX start/stop and the 12 V power is switched automatically at "
-            "app start/exit. The link is disabled when \"Use\" is OFF or the address is empty."
-        ))
-        # ★長い説明文(特に英語)が折り返されずに画面の右端で切れていたため、折り返す。
-        ptt_note.setWordWrap(True)
-        self.body_layout.addWidget(ptt_note)
-
-        self.body_layout.addWidget(self._section_label(tr("オンデバイス復調", "On-device Demodulation")))
-        self.on_device_checkbox = QtWidgets.QCheckBox(tr("オンデバイス復調 (GNU Radio)", "On-device demodulation (GNU Radio)"))
-        self.on_device_checkbox.toggled.connect(self._on_on_device_toggled)
-        self.body_layout.addWidget(self.on_device_checkbox)
-        self.body_layout.addWidget(QtWidgets.QLabel(
-            tr("ONのとき、送信画面に「受信画面へ」ボタンを表示します。",
-               "When ON, the \"Go to RX\" button is shown on the TX screen.")
-        ))
-
-        self.body_layout.addWidget(self._section_label(tr("受信診断 / RX Diagnostics", "RX Diagnostics")))
-        self.iio_preflight_checkbox = QtWidgets.QCheckBox(
-            tr("IIOプリフライト試験を実施する", "Run IIO preflight test"))
-        self.iio_preflight_checkbox.setMinimumHeight(48)
-        self.iio_preflight_checkbox.toggled.connect(
-            self._on_iio_preflight_toggled)
-        self.body_layout.addWidget(self.iio_preflight_checkbox)
+        self.pluto_udp_port_label.setStyleSheet("color: #cccccc; font-size: 13px;")
+        left.addWidget(self.pluto_udp_port_label)
 
         # ★このPi5にはRTCバッテリがなく、ネットワーク接続がない現場運用では起動のたびに
         # 日時がリセットされる。オーバーレイ(コールサイン+日時焼き込み、映像ソース画面参照)
         # の日時を正しくするため、手動で日時を設定できるようにする。
-        self.body_layout.addWidget(self._section_label(tr("システム日時 / System Date & Time", "System Date & Time")))
+        left.addWidget(self._section_label(tr("システム日時 / System Date & Time", "System Date & Time")))
         self.datetime_edit = QtWidgets.QDateTimeEdit()
-        self.datetime_edit.setMinimumHeight(48)
+        self.datetime_edit.setFixedHeight(_FIELD_HEIGHT)
         self.datetime_edit.setCalendarPopup(True)
         self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
-        self.body_layout.addWidget(self.datetime_edit)
+        left.addWidget(self.datetime_edit)
         self.set_datetime_btn = QtWidgets.QPushButton(tr("この日時を設定 / Set", "Set This Date & Time"))
-        self.set_datetime_btn.setMinimumHeight(48)
+        self.set_datetime_btn.setFixedHeight(_FIELD_HEIGHT)
+        self.set_datetime_btn.setStyleSheet("min-height: 0px; padding: 4px 12px;")
         self.set_datetime_btn.clicked.connect(self._on_set_datetime)
-        self.body_layout.addWidget(self.set_datetime_btn)
+        left.addWidget(self.set_datetime_btn)
+        left.addStretch(1)
+
+        right.addWidget(self._section_label(
+            tr("PA_Power/PTTコントローラ (ESP32)", "PA_Power/PTT Controller (ESP32)")))
+        self.use_ptt_controller_checkbox = QtWidgets.QCheckBox(
+            tr("ESP32 W5500を使用する", "Use ESP32 W5500"))
+        self.use_ptt_controller_checkbox.setFixedHeight(_FIELD_HEIGHT)
+        self.use_ptt_controller_checkbox.toggled.connect(self._on_use_ptt_controller_toggled)
+        right.addWidget(self.use_ptt_controller_checkbox)
+        self.ptt_controller_ip_edit = QtWidgets.QLineEdit()
+        self.ptt_controller_ip_edit.setFixedHeight(_FIELD_HEIGHT)
+        self.ptt_controller_ip_edit.setPlaceholderText(tr("未使用の場合は空欄のまま", "Leave empty if not used"))
+        self.ptt_controller_ip_edit.editingFinished.connect(self._save_ptt_controller_ip)
+        right.addWidget(self.ptt_controller_ip_edit)
+        ptt_note = QtWidgets.QLabel(tr(
+            "ESP32+W5500ボードのIPアドレス。送信開始/終了でPTTを、"
+            "アプリ起動/終了で12V電源を自動切替します。",
+            "IP of the ESP32 + W5500 board. PTT follows TX start/stop and "
+            "the 12 V power follows app start/exit."
+        ))
+        # ★長い説明文(特に英語)が折り返されずに画面の右端で切れていたため、折り返す。
+        ptt_note.setWordWrap(True)
+        ptt_note.setStyleSheet("color: #cccccc; font-size: 13px;")
+        right.addWidget(ptt_note)
+
+        right.addWidget(self._section_label(tr("オンデバイス復調", "On-device Demodulation")))
+        self.on_device_checkbox = QtWidgets.QCheckBox(tr("オンデバイス復調 (GNU Radio)", "On-device demodulation (GNU Radio)"))
+        self.on_device_checkbox.setFixedHeight(_FIELD_HEIGHT)
+        self.on_device_checkbox.toggled.connect(self._on_on_device_toggled)
+        right.addWidget(self.on_device_checkbox)
+        on_device_note = QtWidgets.QLabel(
+            tr("ONのとき、送信画面に「受信画面へ」ボタンを表示します。",
+               "When ON, the \"Go to RX\" button is shown on the TX screen."))
+        on_device_note.setWordWrap(True)
+        on_device_note.setStyleSheet("color: #cccccc; font-size: 13px;")
+        right.addWidget(on_device_note)
+
+        right.addWidget(self._section_label(tr("受信診断 / RX Diagnostics", "RX Diagnostics")))
+        self.iio_preflight_checkbox = QtWidgets.QCheckBox(
+            tr("IIOプリフライト試験を実施する", "Run IIO preflight test"))
+        self.iio_preflight_checkbox.setFixedHeight(_FIELD_HEIGHT)
+        self.iio_preflight_checkbox.toggled.connect(
+            self._on_iio_preflight_toggled)
+        right.addWidget(self.iio_preflight_checkbox)
+        right.addStretch(1)
         settings = self.main_window.settings
         index = self.band_combo.findData(settings.selected_band)
         if index >= 0:
@@ -178,7 +196,7 @@ class SettingsScreen(SettingsSubScreen):
     @staticmethod
     def _section_label(text: str) -> QtWidgets.QLabel:
         label = QtWidgets.QLabel(text)
-        label.setStyleSheet("font-size: 16px; font-weight: bold; color: #f2f2f2; padding-top: 8px;")
+        label.setStyleSheet("font-size: 15px; font-weight: bold; color: #f2f2f2; padding-top: 4px;")
         return label
 
     @staticmethod
