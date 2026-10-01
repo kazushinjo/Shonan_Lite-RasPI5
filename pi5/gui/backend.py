@@ -139,8 +139,9 @@ _OVERLAY_CJK_FONT_PATH = "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.
 _OVERLAY_IMAGE_NAME = "shonan_overlay.png"
 
 
-# 送信映像の解像度はフルHD(1920x1080)固定。カメラの実キャプチャ解像度や画像ファイルの
+# 送信映像はまずフルHD(1920x1080)に揃える。カメラの実キャプチャ解像度や画像ファイルの
 # 寸法・縦横比に関わらず、縦横比を保って縮小/拡大し、余白は黒で埋めて1920x1080に揃える。
+# 720p送信の場合も合成まではフルHDで行い、符号化直前に縮小する(_video_encoder_args参照)。
 TX_VIDEO_WIDTH = 1920
 TX_VIDEO_HEIGHT = 1080
 _TX_VIDEO_SCALE_FILTER = (
@@ -150,7 +151,8 @@ _TX_VIDEO_SCALE_FILTER = (
 
 
 def _video_encoder_args(settings: AppSettings, video_kbps: int) -> list[str]:
-    """送信映像の符号化引数。settings.video_codecでH.264/H.265を切り替える。"""
+    """送信映像の符号化引数。settings.video_codecでH.264/H.265、
+    settings.tx_video_heightで1080p/720pを切り替える。"""
     if settings.video_codec == "h265":
         codec_args = [
             "-c:v", "libx265", "-preset", "ultrafast", "-tune", "zerolatency",
@@ -168,7 +170,10 @@ def _video_encoder_args(settings: AppSettings, video_kbps: int) -> list[str]:
             # referenced"を出し続けて一切復号できなくなる不具合が実機で確認された。
             "-x264-params", "nal-hrd=cbr:force-cfr=1:repeat-headers=1",
         ]
-    return codec_args + [
+    # 720p選択時は、フルHDで合成済みの映像を符号化直前に縮小する(出力側の-sは
+    # -vf/-filter_complexどちらの経路でも末尾にscaleを挿入する)。
+    size_args = ["-s", "1280x720"] if settings.tx_video_height == 720 else []
+    return codec_args + size_args + [
         "-b:v", f"{video_kbps}k", "-maxrate", f"{video_kbps}k", "-bufsize", f"{video_kbps}k",
         "-g", "30", "-pix_fmt", "yuv420p",
     ]

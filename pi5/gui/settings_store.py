@@ -75,6 +75,8 @@ TX_VIDEO_BITRATE_BPS = 400_000
 # 送信映像のコーデック。h265は同じビットレートで画質が上がる代わりに符号化が重い
 # (Pi5にHEVCハードウェアエンコーダは無く、libx265のCPU符号化になる)。
 VIDEO_CODECS = ("h264", "h265")
+# 送信映像の解像度(縦の画素数)。オーバーレイ等はフルHDで合成し、符号化直前に縮小する。
+TX_VIDEO_HEIGHTS = (1080, 720)
 TX_AUDIO_BITRATE_BPS = 16_000
 
 
@@ -157,6 +159,8 @@ class AppSettings:
     use_color_bar_source: bool = True
     # 送信映像のコーデック(VIDEO_CODECSのいずれか)。受信側はTSから自動判別する。
     video_codec: str = "h264"
+    # 送信映像の解像度(TX_VIDEO_HEIGHTSのいずれか)。720は1280x720に縮小して送る。
+    tx_video_height: int = 1080
 
     # カメラ映像へ焼き込むオーバーレイ(shonan_lite-ipad版CameraOverlayRenderer相当)。
     # コールサイン(左上・大)+送信開始時の日時と備考(右下・小)。カラーバーには
@@ -261,6 +265,8 @@ def load() -> AppSettings:
             defaults["use_color_bar_source"] = True
         if defaults.get("video_codec") not in VIDEO_CODECS:
             defaults["video_codec"] = AppSettings.video_codec
+        if defaults.get("tx_video_height") not in TX_VIDEO_HEIGHTS:
+            defaults["tx_video_height"] = AppSettings.tx_video_height
         # 選択肢から外した変調方式(16APSK等)で保存された設定はQPSKへ移行し、
         # FECもQPSKで使えない値なら既定値へ戻す。
         if defaults.get("modulation_scheme") not in MODULATION_SCHEMES:

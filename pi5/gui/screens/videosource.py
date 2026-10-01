@@ -95,6 +95,17 @@ class VideoSourceScreen(SettingsSubScreen):
             self.codec_combo.addItem(label, codec)
         self.codec_combo.activated.connect(self._save_video_codec)
         left_layout.addWidget(self.codec_combo)
+        # 送信解像度。H.265の1080pでCPUが追いつかない場合や、低ビットレートで画質を
+        # 優先したい場合に720pを選ぶ。合成はフルHDのまま行うため文字の見た目の比率は変わらない。
+        resolution_title = QtWidgets.QLabel(tr("送信解像度", "TX Resolution"))
+        resolution_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
+        left_layout.addWidget(resolution_title)
+        self.resolution_combo = QtWidgets.QComboBox()
+        self.resolution_combo.setMinimumHeight(32)
+        for label, height in (("1080p (1920x1080)", 1080), ("720p (1280x720)", 720)):
+            self.resolution_combo.addItem(label, height)
+        self.resolution_combo.activated.connect(self._save_tx_video_height)
+        left_layout.addWidget(self.resolution_combo)
         self._load_video_codec()
         left_layout.addStretch(1)
         # カメラ映像を静止画(JPG)として撮影・保存する。保存した画像は「ファイル選択」で
@@ -158,8 +169,8 @@ class VideoSourceScreen(SettingsSubScreen):
         columns.addWidget(right, 2)
 
         # 映像へ焼き込むコールサイン・備考(カメラ・画像ファイルに適用、テストパターンには
-        # 元々コールサインが描かれているため適用しない)。送信解像度はフルHD(1920x1080)固定のため、
-        # 解像度・フレームレートの選択欄は置かない。
+        # 元々コールサインが描かれているため適用しない)。送信解像度は左列で1080p/720pを選ぶ
+        # (合成はフルHDで行う)。フレームレートの選択欄は置かない。
         callsign_row = QtWidgets.QHBoxLayout()
         callsign_row.setSpacing(10)
         callsign_row.addWidget(self._overlay_label(tr("コールサイン", "Callsign")))
@@ -311,11 +322,18 @@ class VideoSourceScreen(SettingsSubScreen):
         return combo
 
     def _load_video_codec(self) -> None:
-        index = self.codec_combo.findData(self.main_window.settings.video_codec)
+        settings = self.main_window.settings
+        index = self.codec_combo.findData(settings.video_codec)
         self.codec_combo.setCurrentIndex(max(index, 0))
+        index = self.resolution_combo.findData(settings.tx_video_height)
+        self.resolution_combo.setCurrentIndex(max(index, 0))
 
     def _save_video_codec(self, _index: int) -> None:
         self.main_window.settings.video_codec = str(self.codec_combo.currentData())
+        self.main_window.save_settings()
+
+    def _save_tx_video_height(self, _index: int) -> None:
+        self.main_window.settings.tx_video_height = int(self.resolution_combo.currentData())
         self.main_window.save_settings()
 
     def _save_overlay_callsign_color(self, _index: int) -> None:
