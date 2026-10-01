@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from settings_store import normalize_pluto_host, normalize_ptt_controller_host
 import subprocess
+from pathlib import Path
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -15,6 +16,8 @@ from widgets import SettingsSubScreen, confirm_dialog, error_dialog
 
 # 入力欄・チェックボックス・ボタンの高さ。1画面に収めるため他画面(48px)より詰める。
 _FIELD_HEIGHT = 38
+# ON/OFFスイッチ画像の置き場所(Qtスタイルシートのurl()は区切りが/である必要がある)。
+_ASSETS = (Path(__file__).resolve().parents[2] / "assets").as_posix()
 
 
 class SettingsScreen(SettingsSubScreen):
@@ -37,7 +40,16 @@ class SettingsScreen(SettingsSubScreen):
             "QFrame#settingsPanel QComboBox, QLineEdit, QDateTimeEdit {"
             " background-color: #202427; color: #eeeeee;"
             " border: 1px solid #42494d; border-radius: 8px; padding: 8px; }"
-            "QFrame#settingsPanel QCheckBox { color: #eeeeee; min-height: 0px; }"
+            # チェックボックスはON/OFFスイッチ風の画像(assets/toggle_*.png)で表示し、
+            # 行は入力欄と同じ色の角丸カードにする(既定の四角い枠+黒帯が無骨だったため)。
+            "QFrame#settingsPanel QCheckBox { color: #eeeeee; min-height: 0px;"
+            " background-color: #202427; border: 1px solid #42494d; border-radius: 8px;"
+            " padding-left: 10px; spacing: 12px; font-size: 15px; }"
+            "QFrame#settingsPanel QCheckBox::indicator { width: 52px; height: 30px; }"
+            f"QFrame#settingsPanel QCheckBox::indicator:unchecked {{ image: url({_ASSETS}/toggle_off.png); }}"
+            f"QFrame#settingsPanel QCheckBox::indicator:checked {{ image: url({_ASSETS}/toggle_on.png); }}"
+            f"QFrame#settingsPanel QCheckBox::indicator:unchecked:disabled {{ image: url({_ASSETS}/toggle_off_disabled.png); }}"
+            f"QFrame#settingsPanel QCheckBox::indicator:checked:disabled {{ image: url({_ASSETS}/toggle_on_disabled.png); }}"
             # ★SettingsSubScreen共通のmin-height(入力欄42px/チェック52px)が_FIELD_HEIGHTより
             # 優先され1画面に収まらなかったため、このパネル内だけ打ち消す。
             "QFrame#settingsPanel QLineEdit, QFrame#settingsPanel QDateTimeEdit {"
@@ -172,6 +184,10 @@ class SettingsScreen(SettingsSubScreen):
             self._on_iio_preflight_toggled)
         right.addWidget(self.iio_preflight_checkbox)
         right.addStretch(1)
+        # スイッチ風の見た目に合わせ、タッチ後に文字へ点線のフォーカス枠が出ないようにする。
+        for checkbox in (self.use_ptt_controller_checkbox, self.on_device_checkbox,
+                         self.iio_preflight_checkbox):
+            checkbox.setFocusPolicy(QtCore.Qt.NoFocus)
         settings = self.main_window.settings
         index = self.band_combo.findData(settings.selected_band)
         if index >= 0:
