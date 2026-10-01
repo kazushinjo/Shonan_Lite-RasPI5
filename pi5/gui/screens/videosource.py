@@ -88,22 +88,26 @@ class VideoSourceScreen(SettingsSubScreen):
         # 送信画像として選べる。映像ソースが「カメラ」のときだけ表示する。
         self._capture_process = None
         self._capture_path = None
-        self.capture_btn = QtWidgets.QPushButton(tr("撮影", "Capture"))
-        self.capture_btn.setMinimumHeight(30)
+        self.capture_btn = QtWidgets.QPushButton(tr("静止画を\n撮影", "Capture\nStill"))
+        self.capture_btn.setFixedHeight(44)
+        # ★min-heightはSettingsSubScreen共通のQPushButton min-height(52px)を上書きするため
+        # (0にすると文字の高さまで縮むので、タッチしやすい高さを明示する)。
         self.capture_btn.setStyleSheet(
-            "QPushButton { background-color: #1677ff; color: white; border: none;"
-            " border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: bold; }"
+            "QPushButton { background-color: #1677ff; color: white; border: none; min-height: 36px;"
+            " border-radius: 8px; padding: 2px 6px; font-size: 13px; font-weight: bold; }"
             "QPushButton:pressed { background-color: #102a5c; }"
             "QPushButton:disabled { color: #777777; background-color: #171a1c; }"
         )
         self.capture_btn.clicked.connect(self._capture_still)
         # 撮影した画像(CAPTURE_DIRのcapture_*.jpg)をまとめて削除する。撮影ボタンと
         # 半分ずつの幅で横に並べ、誤操作と区別できるよう赤系の色にする。
-        self.delete_captures_btn = QtWidgets.QPushButton(tr("全削除", "Delete All"))
-        self.delete_captures_btn.setMinimumHeight(30)
+        # ★「全削除」だけでは何を消すのか分からなかったため、対象(撮影画像)をボタン名に入れ、
+        # 下に保存先と枚数を表示する。
+        self.delete_captures_btn = QtWidgets.QPushButton(tr("撮影画像を\n全削除", "Delete All\nCaptures"))
+        self.delete_captures_btn.setFixedHeight(44)
         self.delete_captures_btn.setStyleSheet(
-            "QPushButton { background-color: #c62828; color: white; border: none;"
-            " border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: bold; }"
+            "QPushButton { background-color: #c62828; color: white; border: none; min-height: 36px;"
+            " border-radius: 8px; padding: 2px 6px; font-size: 13px; font-weight: bold; }"
             "QPushButton:pressed { background-color: #7f1a1a; }"
             "QPushButton:disabled { color: #777777; background-color: #171a1c; }"
         )
@@ -118,6 +122,10 @@ class VideoSourceScreen(SettingsSubScreen):
         capture_row.addWidget(self.capture_btn, 1)
         capture_row.addWidget(self.delete_captures_btn, 1)
         left_layout.addLayout(capture_row)
+        self.capture_info_label = QtWidgets.QLabel()
+        self.capture_info_label.setStyleSheet("color: #aaaaaa; font-size: 12px; border: none;")
+        self.capture_info_label.setWordWrap(True)
+        left_layout.addWidget(self.capture_info_label)
         columns.addWidget(left, 1)
 
         right = QtWidgets.QFrame()
@@ -206,6 +214,9 @@ class VideoSourceScreen(SettingsSubScreen):
         note_row.addWidget(self.overlay_note_color)
         back_btn = QtWidgets.QPushButton(tr("ホームへ戻る", "Back to Home"))
         back_btn.setFixedHeight(36)
+        # ★共通のQPushButton min-height(52px)が優先されて枠の下へはみ出し、ボタンの下側が
+        # 切れていたため、入力欄と同じ36pxに収まるよう上書きする(実機で確認)。
+        back_btn.setStyleSheet("min-height: 24px; padding: 4px 12px;")
         back_btn.clicked.connect(lambda: self.main_window.navigate_to("home"))
         note_row.addWidget(back_btn)
         outer.addLayout(note_row)
@@ -246,11 +257,12 @@ class VideoSourceScreen(SettingsSubScreen):
                     checked: bool = False) -> None:
         radio = QtWidgets.QPushButton(label)
         radio.setCheckable(True)
-        radio.setMinimumHeight(30)
+        # 高さはスタイルシートのmin-height(32px+上下padding)で40pxにする。共通の52pxのままだと
+        # カメラ選択時に「撮影」行と保存先表示が収まらない。
         radio.setChecked(checked)
         radio.setEnabled(enabled)
         radio.setStyleSheet(
-            "QPushButton { background-color: #303538; color: white; border: none;"
+            "QPushButton { background-color: #303538; color: white; border: none; min-height: 32px;"
             " border-radius: 8px; padding: 4px 10px; text-align: left;"
             " font-size: 13px; font-weight: bold; }"
             "QPushButton:checked { background-color: #1677ff; }"
@@ -404,18 +416,32 @@ class VideoSourceScreen(SettingsSubScreen):
         self.capture_btn.setEnabled(is_camera and self._capture_process is None)
         self.delete_captures_btn.setVisible(is_camera)
         self.delete_captures_btn.setEnabled(is_camera and self._capture_process is None)
+        self.capture_info_label.setVisible(is_camera)
+        count = len(self._saved_captures())
+        self.capture_info_label.setText(tr(
+            f"保存先: Pictures/Shonan_Lite\n保存済みの撮影画像: {count} 枚",
+            f"Folder: Pictures/Shonan_Lite\nSaved captures: {count}"))
+
+    @staticmethod
+    def _saved_captures() -> list[Path]:
+        return sorted(CAPTURE_DIR.glob("capture_*.jpg")) if CAPTURE_DIR.is_dir() else []
 
     def _delete_all_captures(self) -> None:
-        captures = sorted(CAPTURE_DIR.glob("capture_*.jpg")) if CAPTURE_DIR.is_dir() else []
+        captures = self._saved_captures()
+        title = tr("撮影画像の全削除", "Delete All Captures")
         if not captures:
             QtWidgets.QMessageBox.information(
-                self, tr("全削除", "Delete All"),
+                self, title,
                 tr("削除する撮影画像はありません。", "There are no captured images to delete."))
             return
         if not confirm_dialog(
-                self, tr("全削除", "Delete All"),
-                tr(f"撮影した画像 {len(captures)} 枚をすべて削除します。よろしいですか？",
-                   f"Delete all {len(captures)} captured images?")):
+                self, title,
+                tr(f"「静止画を撮影」で保存した画像 {len(captures)} 枚\n"
+                   f"(保存先: ホーム/Pictures/Shonan_Lite)をすべて削除します。\n"
+                   f"カメラの映像や設定は消えません。削除した画像は元に戻せません。\nよろしいですか？",
+                   f"Delete all {len(captures)} images saved with \"Capture Still\"\n"
+                   f"(in Home/Pictures/Shonan_Lite)?\n"
+                   f"The camera video and settings are not affected. This cannot be undone.")):
             return
         failed = []
         for path in captures:
@@ -428,9 +454,10 @@ class VideoSourceScreen(SettingsSubScreen):
         if settings.video_file_path and not Path(settings.video_file_path).exists():
             settings.video_file_path = ""
             self.main_window.save_settings()
+        self._update_capture_button()
         if failed:
             QtWidgets.QMessageBox.warning(
-                self, tr("全削除", "Delete All"),
+                self, title,
                 tr("削除できなかった画像があります:\n", "Some images could not be deleted:\n")
                 + "\n".join(failed))
 
