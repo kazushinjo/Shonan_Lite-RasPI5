@@ -83,31 +83,6 @@ class VideoSourceScreen(SettingsSubScreen):
                          checked=(current_source == "file"))
         self._add_source(left_layout, tr("テストパターン", "Test Pattern"), "colorbar",
                          enabled=True, checked=(current_source == "colorbar"))
-        # 送信映像のコーデック。H.265は同じビットレートで画質が上がるが、Pi5のCPU負荷が大きい。
-        # 受信側(Pi5/Pi4/Windows)はTSから自動判別するため、受信の設定は不要。
-        # 送信解像度は、H.265の1080pでCPUが追いつかない場合や低ビットレートで画質を優先したい
-        # 場合に720pを選ぶ。合成はフルHDのまま行うため文字の見た目の比率は変わらない。
-        # ★800x480画面に収まるよう、見出し1行+コンボ2つの横並び1行に抑える(縦に並べると
-        # 下の備考行が画面外へはみ出した)。
-        codec_title = QtWidgets.QLabel(tr("コーデック / 解像度", "Codec / Resolution"))
-        codec_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
-        left_layout.addWidget(codec_title)
-        codec_row = QtWidgets.QHBoxLayout()
-        codec_row.setSpacing(6)
-        self.codec_combo = QtWidgets.QComboBox()
-        self.codec_combo.setFixedHeight(30)
-        for label, codec in (("H.264", "h264"), ("H.265", "h265")):
-            self.codec_combo.addItem(label, codec)
-        self.codec_combo.activated.connect(self._save_video_codec)
-        codec_row.addWidget(self.codec_combo, 1)
-        self.resolution_combo = QtWidgets.QComboBox()
-        self.resolution_combo.setFixedHeight(30)
-        for label, height in (("1080p", 1080), ("720p", 720)):
-            self.resolution_combo.addItem(label, height)
-        self.resolution_combo.activated.connect(self._save_tx_video_height)
-        codec_row.addWidget(self.resolution_combo, 1)
-        left_layout.addLayout(codec_row)
-        self._load_video_codec()
         left_layout.addStretch(1)
         # カメラ映像を静止画(JPG)として撮影・保存する。保存した画像は「ファイル選択」で
         # 送信画像として選べる。映像ソースが「カメラ」のときだけ表示する。
@@ -152,7 +127,32 @@ class VideoSourceScreen(SettingsSubScreen):
         right_layout.setSpacing(4)
         preview_title = QtWidgets.QLabel(tr("プレビュー", "Preview"))
         preview_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
-        right_layout.addWidget(preview_title)
+        # 送信映像のコーデックと解像度。H.265は同じビットレートで画質が上がるがPi5のCPU負荷が
+        # 大きく、720pはH.265でCPUが追いつかない場合や低ビットレートで画質を優先したい場合に使う
+        # (合成はフルHDのまま行うため文字の見た目の比率は変わらない)。受信側はTSから自動判別する。
+        # ★プレビュー見出しの行に置く。左列に置くと、カメラ選択時に「撮影」行が加わって
+        # 800x480画面に収まらずスクロールになった(実機で確認)。
+        codec_label = QtWidgets.QLabel(tr("コーデック / 解像度", "Codec / Resolution"))
+        codec_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #54bce0;")
+        self.codec_combo = QtWidgets.QComboBox()
+        self.codec_combo.setFixedSize(96, 30)
+        for label, codec in (("H.264", "h264"), ("H.265", "h265")):
+            self.codec_combo.addItem(label, codec)
+        self.codec_combo.activated.connect(self._save_video_codec)
+        self.resolution_combo = QtWidgets.QComboBox()
+        self.resolution_combo.setFixedSize(96, 30)
+        for label, height in (("1080p", 1080), ("720p", 720)):
+            self.resolution_combo.addItem(label, height)
+        self.resolution_combo.activated.connect(self._save_tx_video_height)
+        title_row = QtWidgets.QHBoxLayout()
+        title_row.setSpacing(6)
+        title_row.addWidget(preview_title)
+        title_row.addStretch(1)
+        title_row.addWidget(codec_label)
+        title_row.addWidget(self.codec_combo)
+        title_row.addWidget(self.resolution_combo)
+        right_layout.addLayout(title_row)
+        self._load_video_codec()
         self.preview = QtWidgets.QLabel()
         self.preview.setAlignment(QtCore.Qt.AlignCenter)
         self.preview.setScaledContents(False)
