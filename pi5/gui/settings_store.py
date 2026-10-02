@@ -166,6 +166,10 @@ class AppSettings:
     # 送信音声の入力(TX_AUDIO_INPUTSのいずれか)。映像ソースとは独立に設定画面で選ぶ。
     # 選んだ側のデバイスが見つからない場合は無音で送信する(もう一方へは切り替えない)。
     tx_audio_input: str = "camera"
+    # 送信音量(マイク録音音量、0..100%)。入力ごとに保存し、送信開始時にALSAミキサーへ反映する。
+    # 送信中(オンデバイス復調OFF)にロータリーエンコーダを回すと変更できる。
+    tx_audio_volume_camera: int = 80
+    tx_audio_volume_usb: int = 80
 
     # カメラ映像へ焼き込むオーバーレイ(shonan_lite-ipad版CameraOverlayRenderer相当)。
     # コールサイン(左上・大)+送信開始時の日時と備考(右下・小)。カラーバーには
@@ -226,6 +230,18 @@ class AppSettings:
             return None
         return display_hz - LNB_LO_HZ if self.lnb_active() else display_hz
 
+    def tx_audio_volume(self) -> int:
+        """選択中の送信音声の入力の送信音量(%)。"""
+        if self.tx_audio_input == "usb":
+            return self.tx_audio_volume_usb
+        return self.tx_audio_volume_camera
+
+    def set_tx_audio_volume(self, percent: int) -> None:
+        if self.tx_audio_input == "usb":
+            self.tx_audio_volume_usb = percent
+        else:
+            self.tx_audio_volume_camera = percent
+
     def is_loopback(self) -> bool:
         # ループ試験機能は廃止。旧設定にLOOPBACKが残っていても通常経路を使う。
         return False
@@ -274,6 +290,10 @@ def load() -> AppSettings:
             defaults["tx_video_height"] = AppSettings.tx_video_height
         if defaults.get("tx_audio_input") not in TX_AUDIO_INPUTS:
             defaults["tx_audio_input"] = AppSettings.tx_audio_input
+        for key in ("tx_audio_volume_camera", "tx_audio_volume_usb"):
+            value = defaults.get(key)
+            if not isinstance(value, int) or not 0 <= value <= 100:
+                defaults[key] = getattr(AppSettings, key)
         # 選択肢から外した変調方式(16APSK等)で保存された設定はQPSKへ移行し、
         # FECもQPSKで使えない値なら既定値へ戻す。
         if defaults.get("modulation_scheme") not in MODULATION_SCHEMES:

@@ -92,7 +92,14 @@ MANUAL_SECTIONS = [
         ("受信開始", "受信設定を送信条件に合わせ、「受信開始」を押します。試験例では437.000 MHz、500 kS/s、QPSK、FEC 3/5を使用します。受信中はLOCK、実測ビットレート、パケット数、エラー数を確認できます。"),
         ("受信停止", "受信を終了するときは「受信停止」を押します。送信も行っている場合は、受信停止後に送信停止を押します。"),
         ("オンデバイス復調表示", "オンデバイス復調が有効な場合、受信画面にオレンジ色の状態表示が出ます。受信映像が黒い場合は、まず周波数、シンボルレート、FEC、変調方式、配線、TX状態を確認します。"),
-        ("音量", "受信画面の音量スライダーで再生音量を調整します。初期値は30%です。Langstoneと共用のロータリーエンコーダを回しても、どの画面からでも音量を変えられます(1クリック2%、画面中央に音量を表示)。オンデバイス復調OFFで送信中は、PTTでオーディオアンプの電源が切れるため、エンコーダを回しても音量は変わりません。"),
+        ("音量", "受信画面の音量スライダーで再生音量を調整します。初期値は30%です。Langstoneと共用のロータリーエンコーダでも変えられます(「ロータリーエンコーダの動作」参照)。"),
+        ("ロータリーエンコーダの動作", "Langstoneと共用のロータリーエンコーダは、どの画面からでも音量の変更に使えます(1クリック2%、右回りで大きく、画面中央に1.5秒表示)。"
+         "何の音量が変わるかは、オンデバイス復調と送受信の状態で次のように切り替わります。\n"
+         "・オンデバイス復調OFFで送信中: 送信音量(マイクの録音音量)。PTT ONでオーディオアンプの電源が切れ、受信音は聞こえないため。"
+         "設定画面で選んだ入力(カメラ音声/USBオーディオ)ごとに保存され、次の送信開始時にも反映されます(初期値80%)。\n"
+         "・オンデバイス復調OFFで受信中・停止中: 受信音量(スピーカーの音量、初期値30%)。受信画面の音量スライダーと同じ値です。\n"
+         "・オンデバイス復調ON(送信中も含む): 受信音量。ONの間は送信中もPTTをONにせずアンプが動いているので、自局の受信音を聞きながら調整できます。\n"
+         "ポップアップには「音量」(受信)か「送信音量(入力名)」かが表示されます。"),
     ]),
     ("8. 基本運用手順", [
         ("送信のみ", "1) ホームで「周波数」「シンボルレート」「FEC」「変調方式」「映像ソース」「TX出力」を設定、2)「送信」を押す、3) 送信画面で映像プレビューを確認、4)「送信開始」を押す、5) 終了時に「送信停止」を押す。"),
@@ -228,7 +235,14 @@ MANUAL_SECTIONS_EN = [
         ("Starting RX", "Match the receive settings to the transmit conditions and press \"Start RX\". The test example uses 437.000 MHz, 500 kS/s, QPSK, FEC 3/5. While receiving you can check LOCK, the measured bitrate, packet count and error count."),
         ("Stopping RX", "Press \"Stop RX\" to end reception. If also transmitting, press Stop TX after stopping RX."),
         ("On-device demodulation indicator", "When on-device demodulation is enabled, an orange status indicator appears on the RX screen. If the received video is black, first check the frequency, symbol rate, FEC, modulation, wiring and TX state."),
-        ("Volume", "Adjust the playback volume with the volume slider on the RX screen. The default is 30%. You can also turn the rotary encoder shared with Langstone to change the volume from any screen (2% per click; the volume is shown in the center of the screen). While transmitting with on-device demodulation OFF, PTT powers off the audio amplifier, so turning the encoder does not change the volume."),
+        ("Volume", "Adjust the playback volume with the volume slider on the RX screen. The default is 30%. It can also be changed with the rotary encoder shared with Langstone (see \"Rotary Encoder Behavior\")."),
+        ("Rotary Encoder Behavior", "The rotary encoder shared with Langstone changes a volume from any screen (2% per click, clockwise to increase, shown in the center of the screen for 1.5 seconds). "
+         "Which volume it changes depends on on-device demodulation and the TX/RX state:\n"
+         "- On-device demodulation OFF, transmitting: the TX volume (microphone recording level), because PTT ON powers off the audio amplifier and the RX audio cannot be heard. "
+         "It is saved per input selected in Settings (Camera / USB Audio) and applied at the next TX start as well (default 80%).\n"
+         "- On-device demodulation OFF, receiving or stopped: the RX volume (speaker volume, default 30%), the same value as the volume slider on the RX screen.\n"
+         "- On-device demodulation ON (including while transmitting): the RX volume. While ON, PTT is not turned ON even during TX and the amplifier keeps running, so you can adjust it while listening to your own RX audio.\n"
+         "The popup shows whether it is the \"Volume\" (RX) or the \"TX Volume (input name)\"."),
     ]),
     ("8. Basic Operating Procedure", [
         ("TX only", "1) On Home, set Frequency, Symbol Rate, FEC, Modulation, Video Source and TX Power. 2) Press \"Transmit\". 3) Check the video preview on the TX screen. 4) Press \"Start TX\". 5) Press \"Stop TX\" when finished."),

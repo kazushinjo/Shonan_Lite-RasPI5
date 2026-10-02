@@ -146,8 +146,23 @@ def _detect_tx_audio_alsa_device(settings: AppSettings) -> Optional[str]:
     return None
 
 
-def _audio_input_args(settings: AppSettings) -> tuple[list[str], str]:
-    """ffmpegの音声入力引数と、ログ表示用の説明を返す。
+def _set_capture_volume(device: str, percent: int) -> None:
+    """録音デバイス("plughw:カード,デバイス")のマイク録音音量(ALSAミキサーの"Mic")を設定する。
+    C920・USB PnP Sound Deviceとも録音音量の項目名は"Mic Capture Volume"。"""
+    m = re.match(r"plughw:(\d+),", device)
+    if not m:
+        return
+    try:
+        subprocess.run(
+            ["amixer", "-c", m.group(1), "sset", "Mic", f"{percent}%"],
+            capture_output=True, timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def _audio_input_args(settings: AppSettings) -> tuple[list[str], str, Optional[str]]:
+    """ffmpegの音声入力引数、ログ表示用の説明、録音デバイス(無音ならNone)を返す。
 
     カメラ音声・USBオーディオのどちらも1chで録音する(C920のマイク等はステレオで
     列挙されるが、plughwが1chへ変換する)。符号化側も"-ac 1"のモノラル。"""
@@ -155,11 +170,12 @@ def _audio_input_args(settings: AppSettings) -> tuple[list[str], str]:
     label = "カメラ音声" if settings.tx_audio_input == "camera" else "USBオーディオ"
     if device is not None:
         return (["-f", "alsa", "-channels", "1", "-i", device],
-                f"[音声] {label} ({device}、モノラル)を送信します")
+                f"[音声] {label} ({device}、モノラル、送信音量{settings.tx_audio_volume()}%)を送信します",
+                device)
     return [
         "-f", "lavfi", "-i",
         "anullsrc=channel_layout=mono:sample_rate=48000",
-    ], f"[音声] {label}が見つからないため無音で送信します"
+    ], f"[音声] {label}が見つからないため無音で送信します", None
 
 
 # コールサイン/日時/備考オーバーレイに使うフォント(shonan_lite-ipad版CameraOverlayRenderer
@@ -630,12 +646,25 @@ class TxController(QtCore.QObject):
         self._should_be_running = False
         self._last_settings: Optional[AppSettings] = None
         self._last_mode: Optional[str] = None  # "video" | "camera_audio"
+        # 送信中の録音デバイス(無音送信ならNone)。送信中の送信音量変更に使う。
+        self._tx_audio_device: Optional[str] = None
         self._preview_buffer = bytearray()
         self._preview_width = 640
         self._preview_height = 360
         self._emit_timer = QtCore.QTimer(self)
         self._emit_timer.setInterval(500)
         self._emit_timer.timeout.connect(self._flush_pending_output)
+
+    def _apply_tx_audio_volume(self, settings: AppSettings) -> None:
+        if self._tx_audio_device is not None:
+            _set_capture_volume(self._tx_audio_device, settings.tx_audio_volume())
+
+    def set_tx_audio_volume(self, percent: int) -> bool:
+        """送信中の録音デバイスの送信音量を即時変更する。無音送信中(デバイスなし)はFalse。"""
+        if self._tx_audio_device is None:
+            return False
+        _set_capture_volume(self._tx_audio_device, percent)
+        return True
 
     def is_running(self) -> bool:
         return self._process is not None and self._process.state() != QtCore.QProcess.NotRunning
@@ -767,7 +796,8 @@ class TxController(QtCore.QObject):
                     _send_ptt_request(settings.active_ptt_controller_host(), "on")
                 except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
                     self.log_line.emit(f"[PTT] ESP32への送信開始通知に失敗しました: {exc}")
-        audio_args, audio_message = _audio_input_args(settings)
+        audio_args, audio_message, self._tx_audio_device = _audio_input_args(settings)
+        self._apply_tx_audio_volume(settings)
         self.log_line.emit(audio_message)
         args = video_args + overlay_input_args + audio_args + overlay_filter_args + [
             "-map", video_map, "-map", f"{audio_index}:a",
@@ -917,7 +947,8 @@ class TxController(QtCore.QObject):
         udp_ts_url = _build_udp_ts_url(settings)
         overlay_input_args, overlay_filter_args, video_map, _preview_video_map, audio_index = \
             _build_overlay_pipeline(settings, extra_video_filters="showinfo")
-        audio_args, _audio_message = _audio_input_args(settings)
+        audio_args, _audio_message, self._tx_audio_device = _audio_input_args(settings)
+        self._apply_tx_audio_volume(settings)
         args = ["-f", "v4l2", "-i", settings.camera_device] + overlay_input_args + \
             audio_args + overlay_filter_args + [
             "-map", video_map, "-map", f"{audio_index}:a",
