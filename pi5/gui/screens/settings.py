@@ -125,6 +125,26 @@ class SettingsScreen(SettingsSubScreen):
         self.pluto_udp_port_label.setStyleSheet("color: #cccccc; font-size: 13px;")
         left.addWidget(self.pluto_udp_port_label)
 
+        # 送信音声の入力。映像ソース(カメラ/カラーバー/静止画)とは独立に選ぶ。
+        left.addWidget(self._section_label(tr("送信音声の入力", "TX Audio Input")))
+        audio_layout = QtWidgets.QHBoxLayout()
+        audio_layout.setSpacing(0)
+        audio_group = QtWidgets.QButtonGroup(self)
+        audio_input = main_window.settings.tx_audio_input
+        self.camera_audio_btn = self._segment_button(
+            tr("カメラ音声", "Camera"), audio_input == "camera")
+        self.usb_audio_btn = self._segment_button(
+            tr("USBオーディオ", "USB Audio"), audio_input == "usb")
+        self.usb_audio_btn.setFixedWidth(110)
+        audio_group.addButton(self.camera_audio_btn)
+        audio_group.addButton(self.usb_audio_btn)
+        self.camera_audio_btn.clicked.connect(lambda: self._set_tx_audio_input("camera"))
+        self.usb_audio_btn.clicked.connect(lambda: self._set_tx_audio_input("usb"))
+        audio_layout.addWidget(self.camera_audio_btn)
+        audio_layout.addWidget(self.usb_audio_btn)
+        audio_layout.addStretch(1)
+        left.addLayout(audio_layout)
+
         # ★このPi5にはRTCバッテリがなく、ネットワーク接続がない現場運用では起動のたびに
         # 日時がリセットされる。オーバーレイ(コールサイン+日時焼き込み、映像ソース画面参照)
         # の日時を正しくするため、手動で日時を設定できるようにする。
@@ -234,6 +254,10 @@ class SettingsScreen(SettingsSubScreen):
         set_language(lang)
         self.main_window.save_settings()
         self.main_window.rebuild_language()
+
+    def _set_tx_audio_input(self, value: str) -> None:
+        self.main_window.settings.tx_audio_input = value
+        self.main_window.save_settings()
 
     def _on_band_combo_changed(self, index: int) -> None:
         band = self.band_combo.itemData(index)

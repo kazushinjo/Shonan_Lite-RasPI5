@@ -78,6 +78,8 @@ VIDEO_CODECS = ("h264", "h265")
 # 送信映像の解像度(縦の画素数)。オーバーレイ等はフルHDで合成し、符号化直前に縮小する。
 TX_VIDEO_HEIGHTS = (1080, 720)
 TX_AUDIO_BITRATE_BPS = 16_000
+# 送信音声の入力。camera=USBカメラ内蔵マイク、usb=USBオーディオ(外付けマイク等)。
+TX_AUDIO_INPUTS = ("camera", "usb")
 
 
 def normalize_pluto_host(value: str) -> str:
@@ -161,6 +163,9 @@ class AppSettings:
     video_codec: str = "h264"
     # 送信映像の解像度(TX_VIDEO_HEIGHTSのいずれか)。720は1280x720に縮小して送る。
     tx_video_height: int = 1080
+    # 送信音声の入力(TX_AUDIO_INPUTSのいずれか)。映像ソースとは独立に設定画面で選ぶ。
+    # 選んだ側のデバイスが見つからない場合は無音で送信する(もう一方へは切り替えない)。
+    tx_audio_input: str = "camera"
 
     # カメラ映像へ焼き込むオーバーレイ(shonan_lite-ipad版CameraOverlayRenderer相当)。
     # コールサイン(左上・大)+送信開始時の日時と備考(右下・小)。カラーバーには
@@ -267,6 +272,8 @@ def load() -> AppSettings:
             defaults["video_codec"] = AppSettings.video_codec
         if defaults.get("tx_video_height") not in TX_VIDEO_HEIGHTS:
             defaults["tx_video_height"] = AppSettings.tx_video_height
+        if defaults.get("tx_audio_input") not in TX_AUDIO_INPUTS:
+            defaults["tx_audio_input"] = AppSettings.tx_audio_input
         # 選択肢から外した変調方式(16APSK等)で保存された設定はQPSKへ移行し、
         # FECもQPSKで使えない値なら既定値へ戻す。
         if defaults.get("modulation_scheme") not in MODULATION_SCHEMES:

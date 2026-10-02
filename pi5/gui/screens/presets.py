@@ -15,7 +15,7 @@ _PRESET_FIELDS = (
     "pluto_uri", "symbol_rate_msps", "modulation_scheme", "fec_rate",
     "rx_gain_db", "rx_agc_enabled", "tx_power_db", "video_source",
     "video_file_path", "use_color_bar_source", "video_codec",
-    "tx_video_height",
+    "tx_video_height", "tx_audio_input",
     "camera_device", "overlay_callsign", "overlay_note",
     "overlay_callsign_font_size", "overlay_note_font_size", "overlay_callsign_color",
     "overlay_note_color",
