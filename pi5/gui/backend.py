@@ -752,15 +752,21 @@ class TxController(QtCore.QObject):
                 self.error.emit(f"Pluto設定送信に失敗しました: {exc}")
                 return
             output_url = _build_udp_ts_url(settings)
-        try:
-            _set_pi5_tx_gpio(True)
-        except (OSError, subprocess.SubprocessError) as exc:
-            self.log_line.emit(f"[PTT] Pi5 GPIO{PI5_TX_GPIO}のHIGH出力に失敗しました: {exc}")
-        if settings.active_ptt_controller_host():
+        if settings.use_on_device_demod:
+            # ★オンデバイス復調はアッテネータ経由の自己受信試験でPAを使わない。PTT ONで
+            # オーディオアンプの電源が切れ、受信音を聞けなくなるため、PTTはOFFのまま送信する
+            # (stop()側のOFF通知は従来どおり送り、OFFを保証する)。
+            self.log_line.emit("[PTT] オンデバイス復調中のためPTTをONにせず送信します")
+        else:
             try:
-                _send_ptt_request(settings.active_ptt_controller_host(), "on")
-            except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
-                self.log_line.emit(f"[PTT] ESP32への送信開始通知に失敗しました: {exc}")
+                _set_pi5_tx_gpio(True)
+            except (OSError, subprocess.SubprocessError) as exc:
+                self.log_line.emit(f"[PTT] Pi5 GPIO{PI5_TX_GPIO}のHIGH出力に失敗しました: {exc}")
+            if settings.active_ptt_controller_host():
+                try:
+                    _send_ptt_request(settings.active_ptt_controller_host(), "on")
+                except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
+                    self.log_line.emit(f"[PTT] ESP32への送信開始通知に失敗しました: {exc}")
         audio_args, audio_message = _audio_input_args(settings)
         self.log_line.emit(audio_message)
         args = video_args + overlay_input_args + audio_args + overlay_filter_args + [

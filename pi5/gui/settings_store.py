@@ -138,7 +138,7 @@ class AppSettings:
     tx_destination_port: int = 7272
     rx_listen_port: int = 4003
     rx_status_port: int = 4002
-    rx_volume: float = 0.5  # 0.0..1.0 (初期音量50%)
+    rx_volume: float = 0.3  # 0.0..1.0 (初期音量30%)
     tmp_dir: str = "/tmp"
 
     # Android版と同じソフトウェアループ試験設定

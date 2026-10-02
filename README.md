@@ -357,12 +357,14 @@ Shonan_Lite(GUI)は起動中、Unixドメインソケット`/tmp/shonan-pi5-gui.
 `navigate:<画面名>`で任意の画面へ移動できる(画面名: `home` `tx` `rx` `frequency` `rssi`
 `symbolrate` `fec` `modulation` `videosource` `streamoutput` `rxgain` `txpower` `manual`
 `settings` `testequipment` `presets`)。
+`volume:<増減>`(例: `volume:+2`)は、ロータリーエンコーダを回したときと同じ音量変更を行う(音量ポップアップの確認用)。
 
 While running, Shonan_Lite (GUI) accepts commands on the Unix domain socket `/tmp/shonan-pi5-gui.sock`.
 Sending `screenshot` saves the current screen to `/tmp/shonan_lcd_actual.png` (the GUI does not stop).
 `navigate:<screen>` moves to any screen (screens: `home` `tx` `rx` `frequency` `rssi`
 `symbolrate` `fec` `modulation` `videosource` `streamoutput` `rxgain` `txpower` `manual`
 `settings` `testequipment` `presets`).
+`volume:<delta>` (e.g. `volume:+2`) changes the volume the same way as turning the rotary encoder (for checking the volume popup).
 
 ```bash
 python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.connect('/tmp/shonan-pi5-gui.sock'); s.sendall(sys.argv[1].encode()); s.close()" navigate:rssi

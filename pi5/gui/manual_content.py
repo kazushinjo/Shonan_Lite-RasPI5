@@ -58,7 +58,8 @@ MANUAL_SECTIONS = [
          "旨が赤字で表示され、「はい」を選んだ場合のみオンデバイス復調がONになります。「いいえ」を選ぶとチェックは自動的に"
          "OFFへ戻ります。ONのときだけ送信画面に「受信画面へ」ボタンが表示されます。OFFの場合は送信画面から受信画面へ"
          "直接移動できません。OFFの間は送信中の受信開始・受信中の送信開始がエラーになります(送受信を同時に使うには"
-         "ONにしてください)。"),
+         "ONにしてください)。ONの間はPAを使わない試験のため、送信中もPTT信号(Pi5 GPIO21・ESP32)をONにしません"
+         "(PTT ONで切れるオーディオアンプの電源が入ったままになり、受信音を聞けます)。"),
         ("受信診断 / RX Diagnostics", "「IIOプリフライト試験を実施する」をONにすると、受信開始前にIIOコンテキストの疎通確認を行います。"),
         ("システム日時 / System Date & Time", "このPi 5にはRTCバッテリが無いため、ネットワーク接続が無い現場運用では起動のたびに日時がリセットされます。カレンダーから日時を選び「この日時を設定 / Set」を押すと、NTP同期を止めた上でシステム日時に反映します。"),
     ]),
@@ -91,7 +92,7 @@ MANUAL_SECTIONS = [
         ("受信開始", "受信設定を送信条件に合わせ、「受信開始」を押します。試験例では437.000 MHz、500 kS/s、QPSK、FEC 3/5を使用します。受信中はLOCK、実測ビットレート、パケット数、エラー数を確認できます。"),
         ("受信停止", "受信を終了するときは「受信停止」を押します。送信も行っている場合は、受信停止後に送信停止を押します。"),
         ("オンデバイス復調表示", "オンデバイス復調が有効な場合、受信画面にオレンジ色の状態表示が出ます。受信映像が黒い場合は、まず周波数、シンボルレート、FEC、変調方式、配線、TX状態を確認します。"),
-        ("音量", "受信画面の音量スライダーで再生音量を調整します。初期値は50%です。"),
+        ("音量", "受信画面の音量スライダーで再生音量を調整します。初期値は30%です。Langstoneと共用のロータリーエンコーダを回しても、どの画面からでも音量を変えられます(1クリック2%、画面中央に音量を表示)。オンデバイス復調OFFで送信中は、PTTでオーディオアンプの電源が切れるため、エンコーダを回しても音量は変わりません。"),
     ]),
     ("8. 基本運用手順", [
         ("送信のみ", "1) ホームで「周波数」「シンボルレート」「FEC」「変調方式」「映像ソース」「TX出力」を設定、2)「送信」を押す、3) 送信画面で映像プレビューを確認、4)「送信開始」を押す、5) 終了時に「送信停止」を押す。"),
@@ -192,7 +193,9 @@ MANUAL_SECTIONS_EN = [
          "demodulation is turned ON only if you choose \"Yes\". Choosing \"No\" automatically returns "
          "the checkbox to OFF. Only while ON does the TX screen show a \"Go to RX\" button; while OFF "
          "you cannot move directly from the TX screen to the RX screen. While OFF, starting RX during "
-         "TX or starting TX during RX is an error (turn it ON to use TX and RX at the same time)."),
+         "TX or starting TX during RX is an error (turn it ON to use TX and RX at the same time). "
+         "While ON, the PA is not used, so the PTT signal (Pi 5 GPIO21 and ESP32) is not turned ON "
+         "during TX (the audio amplifier, which PTT ON powers off, stays on so you can hear the RX audio)."),
         ("RX Diagnostics", "When \"Run IIO preflight test\" is ON, an IIO context connectivity check runs before starting RX."),
         ("System Date & Time", "Since this Pi 5 has no RTC battery, the date and time reset on every boot in field use without a network connection. Choose a date/time from the calendar and press \"Set This Date & Time\" to stop NTP sync and apply it to the system clock."),
     ]),
@@ -225,7 +228,7 @@ MANUAL_SECTIONS_EN = [
         ("Starting RX", "Match the receive settings to the transmit conditions and press \"Start RX\". The test example uses 437.000 MHz, 500 kS/s, QPSK, FEC 3/5. While receiving you can check LOCK, the measured bitrate, packet count and error count."),
         ("Stopping RX", "Press \"Stop RX\" to end reception. If also transmitting, press Stop TX after stopping RX."),
         ("On-device demodulation indicator", "When on-device demodulation is enabled, an orange status indicator appears on the RX screen. If the received video is black, first check the frequency, symbol rate, FEC, modulation, wiring and TX state."),
-        ("Volume", "Adjust the playback volume with the volume slider on the RX screen. The default is 50%."),
+        ("Volume", "Adjust the playback volume with the volume slider on the RX screen. The default is 30%. You can also turn the rotary encoder shared with Langstone to change the volume from any screen (2% per click; the volume is shown in the center of the screen). While transmitting with on-device demodulation OFF, PTT powers off the audio amplifier, so turning the encoder does not change the volume."),
     ]),
     ("8. Basic Operating Procedure", [
         ("TX only", "1) On Home, set Frequency, Symbol Rate, FEC, Modulation, Video Source and TX Power. 2) Press \"Transmit\". 3) Check the video preview on the TX screen. 4) Press \"Start TX\". 5) Press \"Stop TX\" when finished."),
