@@ -47,7 +47,6 @@ const char* OUT_LABEL[2] = { "POWER 12V (GPIO26)", "PTT (GPIO27)" };
 const int PIN_ONBOARD_LED = 2;
 
 bool outState[2] = { false, false };
-bool txActive = false;
 
 Preferences prefs;
 const char* PREFS_NS = "w5500cfg";
@@ -168,16 +167,20 @@ void servicePendingOutputs() {
 //  TX/RX 切替（本番版と同一。12V電源はここでは触らない）
 // ============================================================
 
+// 送信中かどうかはPTTの実際の状態(ON待ちを含む)で判定する。
+// /tx・/toggle・/ch のどれでPTTを切り替えても表示と動作がずれないようにするため。
+bool isTxActive() {
+    return outState[IDX_PTT] || pttOnPending;
+}
+
 void txStart() {
-    if (txActive) return;
-    txActive = true;
+    if (isTxActive()) return;
     requestPttOn();
     Serial.println("[TX] 送信シーケンス開始");
 }
 
 void txStop() {
-    if (!txActive) return;
-    txActive = false;
+    if (!isTxActive()) return;
     requestPttOff();
     Serial.println("[TX] 受信復帰");
 }
@@ -246,9 +249,11 @@ void sendStatusPage(WiFiClient& client) {
 
     client.println("<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'>");
     client.println("<meta name='viewport' content='width=device-width,initial-scale=1'>");
-    if (pwrOnPending || pttOnPending) {
-        client.println("<meta http-equiv='refresh' content='1'>");
-    }
+    // Pi5アプリ等から/tx・/chで切り替えられても表示が追従するよう常に自動更新する
+    // （ON待ちの間は1秒、それ以外は2秒ごと）
+    client.println((pwrOnPending || pttOnPending)
+                   ? "<meta http-equiv='refresh' content='1;url=/'>"
+                   : "<meta http-equiv='refresh' content='2;url=/'>");
     client.println("<title>[TEST] 12V電源/PTT 制御</title>");
     client.println("<style>");
     client.println("body{margin:0;font-family:sans-serif;background:#000;color:#eee;text-align:center;padding-top:30px}");
@@ -263,7 +268,7 @@ void sendStatusPage(WiFiClient& client) {
     client.println("</style></head><body>");
     client.println("<h1>&#9889; [WiFiテスト版] 12V電源/PTT 制御</h1>");
     client.print("<p style='font-size:1.1em'>状態: <b style='color:");
-    client.print(txActive ? "#f66'>送信中(TX)" : "#6c9'>受信中(RX)");
+    client.print(isTxActive() ? "#f66'>送信中(TX)" : "#6c9'>受信中(RX)");
     client.println("</b></p>");
 
     for (int i = 0; i < 2; i++) {
@@ -369,7 +374,7 @@ void sendStatusJson(WiFiClient& client) {
     client.print(",\"ptt_pending\":");
     client.print(pttOnPending ? "true" : "false");
     client.print(",\"tx_active\":");
-    client.print(txActive ? "true" : "false");
+    client.print(isTxActive() ? "true" : "false");
     client.print(",\"power_delay_ms\":");
     client.print(powerDelayMs);
     client.print(",\"ptt_delay_ms\":");
@@ -402,7 +407,7 @@ void handleClient(WiFiClient& client) {
         } else if (reqLine.indexOf("state=off") >= 0) {
             txStop();
         }
-        sendPlain(client, (outState[IDX_PTT] || pttOnPending) ? "TX" : "RX");
+        sendPlain(client, isTxActive() ? "TX" : "RX");
 
     } else if (reqLine.startsWith("GET /toggle")) {
         // ステータス画面のON/OFFボタン用（/ch と同じ遅延ON・即時OFFロジックを適用）

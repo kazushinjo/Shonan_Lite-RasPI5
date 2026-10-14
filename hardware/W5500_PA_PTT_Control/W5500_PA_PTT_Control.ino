@@ -280,9 +280,11 @@ void sendStatusPage(EthernetClient& client) {
 
     client.println("<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'>");
     client.println("<meta name='viewport' content='width=device-width,initial-scale=1'>");
-    if (pwrOnPending || pttOnPending) {
-        client.println("<meta http-equiv='refresh' content='1'>");
-    }
+    // Pi5アプリ等から/tx・/chで切り替えられても表示が追従するよう常に自動更新する
+    // （ON待ちの間は1秒、それ以外は2秒ごと）
+    client.println((pwrOnPending || pttOnPending)
+                   ? "<meta http-equiv='refresh' content='1;url=/'>"
+                   : "<meta http-equiv='refresh' content='2;url=/'>");
     client.println("<title>12V電源/PTT 制御</title>");
     client.println("<style>");
     client.println("body{margin:0;font-family:sans-serif;background:#000;color:#eee;text-align:center;padding-top:30px}");
