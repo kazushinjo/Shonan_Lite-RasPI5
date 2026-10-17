@@ -9,7 +9,7 @@
 //  - mode = 3：組立状態
 //  - mode = 4：分解図
 
-mode = 1;            // 1:本体のみ 2:蓋のみ 3:組立状態 4:分解図
+mode = 2;            // 1:本体のみ 2:蓋のみ 3:組立状態 4:分解図
 inner_x = 80;       // 内寸 X (幅)
 inner_y = 120;      // 内寸 Y (奥行)
 inner_z = 35;       // 内寸 Z (高さ)
@@ -52,6 +52,10 @@ explode_offset  = 20.0; // 分解図で蓋を持ち上げる距離
 lid_notch_x = 20.0;     // X中心座標（内寸基準）
 lid_notch_w = 25.0;     // 横幅
 lid_notch_h = 8.0;      // 高さ（リップ下端から上方向）
+
+// 背面リップの2つ目の切り欠き（Type-C穴の上・背面小穴を含む）
+lid_notch2_x_start = 45.0; // X開始位置（内寸基準）
+lid_notch2_w       = 10.0; // 横幅 (55 - 45)
 
 // --- 蓋のエンボス文字 ---
 // [文字, X座標(左端), Y座標, 縦の揃え, 文字の大きさ] 座標は内寸基準。
@@ -244,10 +248,11 @@ module lid() {
                    -lid_lip_h])
             cube([lid_notch_w, lid_lip_wall + 4, lid_notch_h]);
 
-        // 背面リップの小穴（本体の背面小穴と同じ位置で貫通）
-        translate([thickness + hole4_x, lid_outer_y - thickness - lid_lip_wall - 1, -hole4_from_top])
-            rotate([-90, 0, 0])
-            cylinder(d=hole4_d, h=lid_lip_wall + 2);
+        // 背面リップの2つ目の切り欠き（X=45〜55）
+        translate([thickness + lid_notch2_x_start,
+                   lid_outer_y - lid_lip_wall - 4,
+                   -lid_lip_h])
+            cube([lid_notch2_w, lid_lip_wall + 4, lid_notch_h]);
     }
 }
 
