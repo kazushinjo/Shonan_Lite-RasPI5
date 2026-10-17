@@ -9,7 +9,7 @@
 //  - mode = 3：組立状態
 //  - mode = 4：分解図
 
-mode = 2;            // 1:本体のみ 2:蓋のみ 3:組立状態 4:分解図
+mode = 1;            // 1:本体のみ 2:蓋のみ 3:組立状態 4:分解図
 inner_x = 80;       // 内寸 X (幅)
 inner_y = 120;      // 内寸 Y (奥行)
 inner_z = 35;       // 内寸 Z (高さ)
@@ -28,12 +28,12 @@ hole_d  = 16.0;     // 丸穴の直径
 
 // 1つ目の穴 (前面の丸穴)
 hole1_x = 20.0;     // X座標 (内寸基準)
-hole1_z = 17.5;     // Z座標 (内寸基準)
+hole1_z = 19.0;     // Z座標 (内寸基準)
 
 // 2つ目の穴 (背面の丸穴)
 hole2_x = 20.0;     // X座標 (内寸基準)
 hole2_y = 120.0;    // Y座標 (内寸基準・背面の壁)
-hole2_z = 17.5;     // Z座標 (内寸基準)
+hole2_z = 19.0;     // Z座標 (内寸基準)
 
 // --- 角穴のパラメータ (前面の切り欠き) ---
 notch_x_start = 45.0; // X開始位置
@@ -72,6 +72,16 @@ hole3_z = 12.6;       // ボス5 + 基板1.6 + 基板面からType-C中心6 (旧
 hole3_w = 15.0;       // 横幅
 hole3_h = 7.0;        // 高さ
 hole3_r = 1.5;        // 角丸半径
+
+// 4つ目の丸穴 (背面・Type-C穴の真上)
+hole4_d     = 3.0;    // 直径
+hole4_x     = hole3_x; // X座標 (Type-C中心と同じ)
+hole4_from_top = 8.0; // 本体上端から穴中心までの距離
+
+// 5つ目の丸穴 (前面・丸穴と角穴の中間)
+hole5_d     = 3.0;    // 直径
+hole5_x     = (hole1_x + notch_x_start + notch_w / 2) / 2; // 丸穴中心と角穴中心の中間 (=37)
+hole5_from_top = 15.0; // 本体上端から穴中心までの距離
 
 $fn = 60;           // 円や角丸の滑らかさ
 
@@ -161,6 +171,16 @@ module body() {
         ])
             rounded_hole_xz(hole3_w, thickness + 2, hole3_h, hole3_r);
 
+        // --- 背面の小穴 (Type-C穴の真上、上端から hole4_from_top) ---
+        translate([thickness + hole4_x, thickness + inner_y - 1, outer_z - hole4_from_top])
+            rotate([-90, 0, 0])
+            cylinder(d=hole4_d, h=thickness + 2);
+
+        // --- 前面の小穴 (丸穴と角穴の中間、上端から hole5_from_top) ---
+        translate([thickness + hole5_x, -1, outer_z - hole5_from_top])
+            rotate([-90, 0, 0])
+            cylinder(d=hole5_d, h=thickness + 2);
+
         // --- 4つ目の穴あけ (前面の角穴) ---
         translate([thickness + notch_x_start, -1, thickness + notch_z_start])
             cube([notch_w, thickness + 2, notch_h]);
@@ -223,6 +243,11 @@ module lid() {
                    lid_outer_y - lid_lip_wall - 4,
                    -lid_lip_h])
             cube([lid_notch_w, lid_lip_wall + 4, lid_notch_h]);
+
+        // 背面リップの小穴（本体の背面小穴と同じ位置で貫通）
+        translate([thickness + hole4_x, lid_outer_y - thickness - lid_lip_wall - 1, -hole4_from_top])
+            rotate([-90, 0, 0])
+            cylinder(d=hole4_d, h=lid_lip_wall + 2);
     }
 }
 
